@@ -3,54 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Route Map</title>
+    <title>Route with Safety Index</title>
     <style>
         #map {
             height: 500px;
             width: 100%;
         }
+        #safety-info {
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
     </style>
-    <!-- Load Google Maps JavaScript API with your API key -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCoT1wmOma1cU-AC-GI2nOh8CT-bms_IkE&callback=initMap" async defer></script>
+    <!-- Load Google Maps API dynamically using the API key from the server -->
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ api_key }}&callback=initMap" async defer></script>
 </head>
 <body>
-    <h2>Simple Route from Islamabad to Rawalpindi</h2>
+    <h2>Route from Rawalpindi to Peshawar with Safety Index</h2>
     <div id="map"></div>
+    <div id="safety-info"></div>
 
     <script>
-        let map, directionsService, directionsRenderer;
+        let map, directionsRenderer;
 
         function initMap() {
-            // Initialize the map centered at Islamabad
             map = new google.maps.Map(document.getElementById("map"), {
-                center: { lat: 33.6844, lng: 73.0479 },  // Center map on Islamabad
-                zoom: 10,
+                center: { lat: 33.6844, lng: 73.0479 },
+                zoom: 8,
             });
-
-            // Initialize Directions Service and Directions Renderer
-            directionsService = new google.maps.DirectionsService();
             directionsRenderer = new google.maps.DirectionsRenderer();
             directionsRenderer.setMap(map);
 
-            // Call function to calculate and display the route
-            calculateAndDisplayRoute();
+            // Fetch and display the route from Rawalpindi to Peshawar
+            fetchSafestRoute();
         }
 
-        function calculateAndDisplayRoute() {
-            directionsService.route(
-                {
-                    origin: "Islamabad",  // Starting point
-                    destination: "Rawalpindi",  // Ending point
-                    travelMode: google.maps.TravelMode.DRIVING
-                },
-                (response, status) => {
-                    if (status === "OK") {
-                        directionsRenderer.setDirections(response);  // Display the route
-                    } else {
-                        console.error("Directions request failed due to " + status);
+        function fetchSafestRoute() {
+            fetch('/safest_route')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById("safety-info").innerText = "No route found.";
+                        return;
                     }
-                }
-            );
+
+                    // Set route directions
+                    directionsRenderer.setDirections(data.route);
+
+                    // Display average safety index
+                    document.getElementById("safety-info").innerText =
+                        `Overall Safety Index: ${data.safety_index.toFixed(2)}`;
+
+                    // Add markers with color coding for each waypoint
+                    data.waypoints.forEach(waypoint => {
+                        new google.maps.Marker({
+                            position: waypoint.location,
+                            map,
+                            title: `Safety Index: ${waypoint.safety_index}`,
+                            icon: {
+                                path: google.maps.SymbolPath.CIRCLE,
+                                fillColor: getColorForSafetyIndex(waypoint.safety_index),
+                                fillOpacity: 0.8,
+                                strokeWeight: 1,
+                                scale: 6
+                            }
+                        });
+                    });
+                })
+                .catch(error => console.error("Error fetching route data:", error));
+        }
+
+        function getColorForSafetyIndex(safetyIndex) {
+            if (safetyIndex > 2) return "red";    // High danger
+            if (safetyIndex === 2) return "orange"; // Medium danger
+            return "green";   // Low danger
         }
     </script>
 </body>
