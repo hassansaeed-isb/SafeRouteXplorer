@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route with Safety Index</title>
+    <style>
+        #map {
+            height: 500px;
+            width: 100%;
+        }
+        #safety-info {
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+        .route-info {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .safest-route {
+            background-color: #e8f5e9;
+            border: 2px solid #4caf50;
+        }
+    </style>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ api_key }}&callback=initMap" async defer></script>
+</head>
+<body>
+    <h2>Routes from Rawalpindi to Islamabad with Safety Index</h2>
+    <div id="map"></div>
+    <div id="routes-container"></div>
+    <div id="safety-info"></div>
+
+    <script>
+        let map, directionsService, directionsRenderers = [];
+
+        function initMap() {
+            // Initialize the map
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: 33.6844, lng: 73.0479 }, // Rawalpindi as default center
+                zoom: 12,
+            });
+
+            // Initialize DirectionsService
+            directionsService = new google.maps.DirectionsService();
+
+            // Fetch and display the routes
+            fetchRoutes();
+        }
+
+        function fetchRoutes() {
+            fetch('/get_route_data') // Fetch route data from Flask backend
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById("safety-info").innerText = "No routes found.";
+                        return;
+                    }
+
+                    // Clear existing routes
+                    clearRoutes();
+
+                    // Find the safest route
+                    const safestRouteIndex = data.routes.reduce((minIndex, route, currentIndex, arr) => 
+                        route.safety_index < arr[minIndex].safety_index ? currentIndex : minIndex
+                    , 0);
+
+                    // Create request for directions service
+                    const request = {
+                        origin: "Rawalpindi", // Starting location
+                        destination: "Islamabad", // Ending location
+                        travelMode: google.maps.TravelMode.DRIVING,
+                        provideRouteAlternatives: true
+                    };
+
+                    // Get directions and display them
+                    directionsService.route(request, function(response, status) {
+                        if (status === 'OK') {
+                            const routesContainer = document.getElementById('routes-container');
+                            routesContainer.innerHTML = ''; // Clear existing route information
+
+                            response.routes.forEach((route, index) => {
+                                // Create a new DirectionsRenderer for each route
+                                const renderer = new google.maps.DirectionsRenderer({
+                                    map: map,
+                                    directions: response,
+                                    routeIndex: index,
+                                    polylineOptions: {
+                                        strokeColor: index === safestRouteIndex ? '#4CAF50' : '#FF0000', // Green for safest route, red for others
+                                        strokeWeight: index === safestRouteIndex ? 6 : 4,
+                                        strokeOpacity: index === safestRouteIndex ? 1.0 : 0.7
+                                    },
+                                    suppressMarkers: true // We handle our own markers
+                                });
+                                directionsRenderers.push(renderer);
+
+                                // Add route information to the container
+                                const routeInfo = document.createElement('div');
+                                routeInfo.className = `route-info ${index === safestRouteIndex ? 'safest-route' : ''}`;
+                                routeInfo.innerHTML = ` 
+                                    <strong>Route ${index + 1}</strong><br>
+                                    Distance: ${route.legs[0].distance.text}<br>
+                                    Duration: ${route.legs[0].duration.text}<br>
+                                    Safety Index: ${data.routes[index].safety_index.toFixed(2)}
+                                    ${index === safestRouteIndex ? '<br><strong>(Safest Route)</strong>' : ''}`;
+                                routesContainer.appendChild(routeInfo);
+                            });
+
+                            // Add markers for all danger points (CSV + Manual points)
+                            data.danger_points.forEach(point => {
+                                new google.maps.Marker({
+                                    position: { lat: point.lat, lng: point.lng },
+                                    map: map,
+                                    title: `Danger Index: ${point.danger_index}`,
+                                    icon: {
+                                        path: google.maps.SymbolPath.CIRCLE,
+                                        fillColor: getColorForDangerIndex(point.danger_index),
+                                        fillOpacity: 0.8,
+                                        strokeWeight: 1,
+                                        scale: 6
+                                    }
+                                });
+                            });
+
+                            // Fit bounds to include all routes and danger points
+                            const bounds = new google.maps.LatLngBounds();
+                            response.routes.forEach(route => {
+                                route.legs.forEach(leg => {
+                                    leg.steps.forEach(step => {
+                                        step.path.forEach(point => {
+                                            bounds.extend(point);
+                                        });
+                                    });
+                                });
+                            });
+
+                            // Add danger points to bounds
+                            data.danger_points.forEach(point => {
+                                bounds.extend(new google.maps.LatLng(point.lat, point.lng));
+                            });
+
+                            map.fitBounds(bounds);
+                        } else {
+                            console.error('Directions request failed due to ' + status);
+                            document.getElementById("safety-info").innerText = "Error fetching route data.";
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error("Error fetching route data:", error);
+                    document.getElementById("safety-info").innerText = "Error fetching route data.";
+                });
+        }
+
+        function clearRoutes() {
+            directionsRenderers.forEach(renderer => {
+                renderer.setMap(null);  // Remove the route from the map
+            });
+            directionsRenderers = []; // Reset the array for next routes
+        }
+
+        function getColorForDangerIndex(dangerIndex) {
+            if (dangerIndex === 3) return "red";    // High danger
+            if (dangerIndex === 2) return "orange"; // Medium danger
+            return "yellow";   // Low danger
+        }
+    </script>
+</body>
+</html>
