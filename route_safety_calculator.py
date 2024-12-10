@@ -28,17 +28,33 @@ class RouteSafetyCalculator:
         :return: List of incident dictionaries
         """
         incidents = []
+        
+        # Hardcoded locations for ISB and RWP
+        additional_incidents = [
+            {"name": "Car Accident", "area": "F-8, Islamabad", "severity": 3, "lat": 33.6844, "lng": 73.0479},
+            {"name": "Robbery", "area": "G-9, Islamabad", "severity": 2, "lat": 33.6846, "lng": 73.0586},
+            {"name": "Pedestrian Hit", "area": "I-10, Islamabad", "severity": 3, "lat": 33.7085, "lng": 73.0770},
+            {"name": "Traffic Jam", "area": "Rawalpindi Saddar", "severity": 1, "lat": 33.5968, "lng": 73.0476},
+            {"name": "Street Fight", "area": "Rawalpindi Committee Chowk", "severity": 2, "lat": 33.6124, "lng": 73.0728},
+            {"name": "Mugging", "area": "Rawalpindi Banni", "severity": 2, "lat": 33.5970, "lng": 73.0417},
+            {"name": "Accident", "area": "F-10, Islamabad", "severity": 2, "lat": 33.7047, "lng": 73.0456}
+        ]
+        
+        incidents.extend(additional_incidents)
+        
         with open(self.csv_file_path, mode='r', encoding='utf-8') as file:
             reader = csv.DictReader(file)
             for row in reader:
                 extracted_info = row['Extracted_Info']
                 
-                # Extract area and severity using regex
+                # Extract area, severity, and name using regex
                 area_match = re.search(r"Area: (.+?)(?:,|$)", extracted_info)
                 severity_match = re.search(r"Severity: (\w+)", extracted_info)
+                name_match = re.search(r"Name: (.+?)(?:,|$)", extracted_info)  # Assuming "Name" is part of extracted_info
 
                 area = area_match.group(1) if area_match else "Unknown"
                 severity = severity_match.group(1).lower() if severity_match else "low"
+                name = name_match.group(1) if name_match else "Unnamed Incident"
 
                 # Map severity to numerical values
                 severity_mapping = {"low": 1, "medium": 2, "high": 3}
@@ -48,6 +64,7 @@ class RouteSafetyCalculator:
                 lat, lng = self._geocode_location(area)
                 
                 incidents.append({
+                    "name": name,
                     "area": area,
                     "severity": severity_value,
                     "lat": lat,
@@ -101,6 +118,10 @@ class RouteSafetyCalculator:
         :param route_coordinates: List of coordinates along the route
         :return: Safety index for the route (0-100, higher is safer)
         """
+
+        if len(route_coordinates) < 2:
+            print("Not enough route coordinates to calculate safety index.")
+
         total_danger_score = 0
         
         # Calculate danger based on each incident location
@@ -121,8 +142,13 @@ class RouteSafetyCalculator:
             if min_distance > 0:
                 danger_contribution = (danger_index * self.a) / min_distance
                 total_danger_score += danger_contribution
+            else:
+                # Handle the case where the route point is exactly on the incident
+                danger_contribution = danger_index * self.a
+                total_danger_score += danger_contribution
 
         # Normalize and invert for safety score (0 to 100)
+        total_danger_score = min(total_danger_score, 100)
         safety_index = max(100 - (total_danger_score / len(route_coordinates)), 0)
         return safety_index
 

@@ -114,14 +114,18 @@ def get_route_data():
     directions_result = gmaps.directions(origin, destination, mode="driving", alternatives=True)
 
     routes = []
-    danger_points = []  # To collect all danger points from CSV
+    danger_points = []
 
     for route in directions_result:
         route_coordinates = [(step['end_location']['lat'], step['end_location']['lng'])
-                             for leg in route['legs'] for step in leg['steps']]
+                            for leg in route['legs'] for step in leg['steps']]
 
         # Calculate safety index for the route
         safety_index = route_safety_calculator.calculate_route_safety(route_coordinates)
+
+        # Ensure that safety_index is being calculated for all routes
+        if safety_index is None:
+            safety_index = 0  # Or some default value if None
 
         # Get danger points along the route
         route_danger_points = []
@@ -134,23 +138,28 @@ def get_route_data():
                     route_danger_points.append({
                         'lat': incident['lat'],
                         'lng': incident['lng'],
+                        'name': incident.get('name', 'Unknown Location'),
                         'danger_index': incident['severity']
                     })
-            
-            # Also add danger points to global list (not just the ones along the route)
-            danger_points.append({
-                'lat': incident['lat'],
-                'lng': incident['lng'],
-                'danger_index': incident['severity']
-            })
-        
+
+        # Add to the danger points list
+        danger_points.extend(route_danger_points)
+
         routes.append({
             'legs': route['legs'],
             'safety_index': safety_index,
             'danger_points': route_danger_points
         })
 
-    return jsonify({'routes': routes, 'danger_points': danger_points})
+    # Deduplicate global danger points
+    unique_danger_points = {f"{dp['lat']},{dp['lng']}": dp for dp in danger_points}.values()
+
+    # Log danger points to console
+    print("Danger Points:")
+    for dp in unique_danger_points:
+        print(f"Name: {dp['name']}, Coordinates: ({dp['lat']}, {dp['lng']}), Danger Index: {dp['danger_index']}")
+
+    return jsonify({'routes': routes, 'danger_points': list(unique_danger_points)})
 
 
 @app.route('/get_locations')
