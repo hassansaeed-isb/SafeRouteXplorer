@@ -142,24 +142,30 @@ def get_route_data():
                         'danger_index': incident['severity']
                     })
 
-        # Add to the danger points list
-        danger_points.extend(route_danger_points)
+            # Add to the danger points list
+            danger_points.append({
+                    'lat': incident['lat'],
+                    'lng': incident['lng'],
+                    'danger_index': incident['severity']
+                })
 
+        danger_points.extend(route_danger_points)
+        
         routes.append({
             'legs': route['legs'],
             'safety_index': safety_index,
             'danger_points': route_danger_points
         })
 
-    # Deduplicate global danger points
-    unique_danger_points = {f"{dp['lat']},{dp['lng']}": dp for dp in danger_points}.values()
+    # # Deduplicate global danger points
+    # unique_danger_points = {f"{dp['lat']},{dp['lng']}": dp for dp in danger_points}.values()
 
-    # Log danger points to console
-    print("Danger Points:")
-    for dp in unique_danger_points:
-        print(f"Name: {dp['name']}, Coordinates: ({dp['lat']}, {dp['lng']}), Danger Index: {dp['danger_index']}")
+    # # Log danger points to console
+    # print("Danger Points:")
+    # for dp in unique_danger_points:
+    #     print(f"Name: {dp['name']}, Coordinates: ({dp['lat']}, {dp['lng']}), Danger Index: {dp['danger_index']}")
 
-    return jsonify({'routes': routes, 'danger_points': list(unique_danger_points)})
+    return jsonify({'routes': routes, 'danger_points': danger_points})
 
 
 @app.route('/get_locations')
