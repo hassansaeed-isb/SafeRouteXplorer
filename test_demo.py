@@ -1,41 +1,52 @@
-from route_safety_calculator import RouteSafetyCalculator
-import googlemaps
+import pytest
+from demo import app  # Import the Flask app instance from demo.py
 
-def test_load_incident_data():
+@pytest.fixture
+def client():
     """
-    Test the loading of incident data from the CSV and hardcoded incidents.
+    Create a test client for the Flask app.
     """
-    gmaps = googlemaps.Client(key="AIzaSyCoT1wmOma1cU-AC-GI2nOh8CT-bms_IkE")
-    calculator = RouteSafetyCalculator(gmaps, "1improved_processed_road_safety_tweets.csv")
+    app.config['TESTING'] = True
+    with app.test_client() as client:
+        yield client
 
-    incidents = calculator._load_incident_data()
-    assert isinstance(incidents, list), "Incidents should be a list"
-    assert len(incidents) > 0, "Incidents should not be empty"
-    assert 'lat' in incidents[0], "Each incident should have 'lat'"
-    assert 'lng' in incidents[0], "Each incident should have 'lng'"
-    assert 'severity' in incidents[0], "Each incident should have 'severity'"
+def test_index_route(client):
+    """
+    Test the index route to ensure it loads correctly.
+    """
+    response = client.get('/')
+    assert response.status_code == 200
+    html = response.data.decode('utf-8')
+    assert "<title>SafeRouteXplorer</title>" in html
+    assert "Safest Route from" in html
 
-def test_calculate_distance():
+def test_get_route_data(client):
     """
-    Test the Haversine distance calculation.
+    Test the /get_route_data route.
     """
-    gmaps = googlemaps.Client(key="AIzaSyCoT1wmOma1cU-AC-GI2nOh8CT-bms_IkE")
-    calculator = RouteSafetyCalculator(gmaps, "1improved_processed_road_safety_tweets.csv")
-    
-    lat1, lon1 = 33.6844, 73.0479  # Rawalpindi
-    lat2, lon2 = 33.6846, 73.0586  # Islamabad
-    distance = calculator._calculate_distance(lat1, lon1, lat2, lon2)
-    assert isinstance(distance, float), "Distance should be a float"
-    assert distance > 0, "Distance should be greater than zero"
+    response = client.get('/get_route_data')
+    assert response.status_code == 200
+    data = response.get_json()
+    assert 'routes' in data, "Expected 'routes' in the JSON response"
+    assert 'danger_points' in data, "Expected 'danger_points' in the JSON response"
 
-def test_calculate_route_safety():
-    """
-    Test the route safety calculation.
-    """
-    gmaps = googlemaps.Client(key="AIzaSyCoT1wmOma1cU-AC-GI2nOh8CT-bms_IkE")
-    calculator = RouteSafetyCalculator(gmaps, "1improved_processed_road_safety_tweets.csv")
+    # Validate structure of the 'routes' list
+    assert isinstance(data['routes'], list), "Expected 'routes' to be a list"
+    assert isinstance(data['danger_points'], list), "Expected 'danger_points' to be a list"
 
-    route_coordinates = [(33.6844, 73.0479), (33.6846, 73.0586)]
-    safety_index = calculator.calculate_route_safety(route_coordinates)
-    assert isinstance(safety_index, float), "Safety index should be a float"
-    assert 0 <= safety_index <= 100, "Safety index should be between 0 and 100"
+    if data['routes']:
+        first_route = data['routes'][0]
+        assert 'legs' in first_route, "Route data should include 'legs'"
+        assert 'safety_index' in first_route, "Route data should include 'safety_index'"
+        assert isinstance(first_route['safety_index'], (int, float)), "'safety_index' should be numeric"
+
+def test_safest_route(client):
+    """
+    Validate that the safest route is correctly identified.
+    """
+    response = client.get('/get_route_data')
+    data = response.get_json()
+    if data['routes']:
+        safest_routes = [route for route in data['routes'] if route.get('is_safest')]
+        assert len(safest_routes) == 1, "There should be exactly one safest route"
+        assert safest_routes[0]['safety_index'] >= 0, "Safety index should be non-negative"
