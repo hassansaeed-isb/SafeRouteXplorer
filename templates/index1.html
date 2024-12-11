@@ -3,31 +3,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Route with Safety Index</title>
+    <title>SafeRouteXplorer</title>
     <style>
+        /* General Styling */
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9; /* Subtle gray background */
+            color: #333;
+        }
+    
+        /* Navbar */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(90deg, #81c784, #a5d6a7); /* Light green gradient */
+            color: white;
+            padding: 15px 0;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        nav .logo {
+    font-size: 2em;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 10px;
+    letter-spacing: 2px;
+    text-transform: none; /* Exact casing */
+}
+    
+        nav .nav-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+    
+        .nav-buttons .btn {
+            background-color: white;
+            color: #388e3c; /* Green button text */
+            padding: 12px 25px;
+            border: none;
+            border-radius: 30px; /* Rounded buttons */
+            font-size: 1em;
+            font-weight: bold;
+            text-transform: capitalize;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+    
+        .nav-buttons .btn:hover {
+            background: #66bb6a; /* Green hover effect */
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
+        }
+    
+        /* Safest Route Section */
+        .safest-route-display {
+            margin: 120px auto 20px; /* Space for the navbar */
+            padding: 20px;
+            background: linear-gradient(135deg, #e8f5e9, #f1f8e9); /* Light green gradient */
+            border-radius: 10px;
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 800px;
+        }
+    
+        .safest-route-display h3 {
+            color: #388e3c; /* Dark green text */
+            font-weight: bold;
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+    
+        .safest-route-display p {
+            color: #555;
+            font-size: 1.1em;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+    
+        /* Map Container */
         #map {
             height: 500px;
             width: 100%;
+            border-radius: 8px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            margin-top: 30px; /* Space below safest route display */
         }
-        #safety-info {
-            margin-top: 20px;
-            font-size: 1.2em;
+    
+        /* General Button Styling (Primary Button) */
+        .btn-primary {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 12px 20px;
+            font-size: 1em;
+            font-weight: bold;
+            color: white;
+            background: #388e3c; /* Solid green */
+            border: none;
+            border-radius: 5px;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
         }
+    
+        .btn-primary:hover {
+            background: #2e7d32; /* Darker green on hover */
+            transform: translateY(-2px);
+        }
+       /* Routes Container */
+       #routes-container {
+            margin: 20px auto;
+            padding: 20px;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Route Card */
         .route-info {
-            margin: 10px 0;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 5px solid transparent; /* Default border */
         }
+
+        .route-info:hover {
+            transform: translateY(-3px);
+            box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.15);
+            border-left: 5px solid #4CAF50; /* Highlight border on hover */
+        }
+
         .safest-route {
-            background-color: #e8f5e9;
-            border: 2px solid #4caf50;
+            border-left: 5px solid #4CAF50; /* Highlight the safest route */
+            background-color: #e8f5e9; /* Subtle green background */
         }
+
+        .route-info strong {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #388e3c; /* Green text for route titles */
+        }
+
+        .route-info p {
+            margin: 5px 0;
+            color: #555;
+            line-height: 1.5;
+        }
+
     </style>
+    
+    
+
     <script src="https://maps.googleapis.com/maps/api/js?key={{ api_key }}&callback=initMap" async defer></script>
 </head>
 <body>
-    <h2>Routes from Rawalpindi to Islamabad with Safety Index</h2>
+    <nav>
+        <div class="logo">SafeRouteXplorer</div>
+        <div class="nav-buttons">
+            <button class="btn">Enable Real-Time Safety Alerts</button>
+            <button class="btn">Search Any Location</button>
+            <button class="btn">Your Timeline</button>
+            <button class="btn">Set Start & End Location</button>
+        </div>
+    </nav>
+    
+
+    <div class="safest-route-display">
+        <h3>Safest Route from Rawalpindi to Islamabad</h3>
+    </div>
+
     <div id="map"></div>
     <div id="routes-container"></div>
     <div id="safety-info"></div>
@@ -102,7 +261,7 @@
                                     <strong>Route ${index + 1}</strong><br>
                                     Distance: ${route.legs[0].distance.text}<br>
                                     Duration: ${route.legs[0].duration.text}<br>
-                                    Safety Index: ${data.routes[index].safety_index.toFixed(2)}
+                                    Danger Index: ${data.routes[index].safety_index.toFixed(2)}
                                     ${index === safestRouteIndex ? '<br><strong>(Safest Route)</strong>' : ''}`;
                                 routesContainer.appendChild(routeInfo);
                             });
