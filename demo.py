@@ -4,15 +4,15 @@ import math
 
 app = Flask(__name__)
 
-GOOGLE_MAPS_API_KEY = "AIzaSyCoT1wmOma1cU-AC-GI2nOh8CT-bms_IkE"
+GOOGLE_MAPS_API_KEY = "AIzaSyBheKlOr5vB1LNTyv2MrRsoUDSe7I1LXKA"
 gmaps = googlemaps.Client(key=GOOGLE_MAPS_API_KEY)
 
 # Hardcoded locations for ISB and RWP
 HARDCODED_INCIDENTS = [
     # {"name": "Car Accident", "area": "F-8, Islamabad", "severity": 3, "lat": 33.6844, "lng": 73.0479},
     # {"name": "Robbery", "area": "G-9, Islamabad", "severity": 2, "lat": 33.6846, "lng": 73.0586},
-    {"name": "Traffic Jam", "area": "Rawalpindi Saddar", "severity": 1, "lat": 33.5968, "lng": 73.0476},
-    {"name": "Street Fight", "area": "Rawalpindi Committee Chowk", "severity": 2, "lat": 33.6124, "lng": 73.0728},
+    # {"name": "Traffic Jam", "area": "Rawalpindi Saddar", "severity": 1, "lat": 33.5968, "lng": 73.0476},
+    # {"name": "Street Fight", "area": "Rawalpindi Committee Chowk", "severity": 2, "lat": 33.6124, "lng": 73.0728},
     {"name": "Mugging", "area": "Rawalpindi Banni", "severity": 2, "lat": 33.5970, "lng": 73.0417},
     {"name": "Flooding", "area": "Murree Road, Rawalpindi", "severity": 4, "lat": 33.6312, "lng": 73.0657},
     {"name": "Accident", "area": "F-10, Islamabad", "severity": 2, "lat": 33.7047, "lng": 73.0456}
