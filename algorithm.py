@@ -1,98 +1,131 @@
 import math
 import csv
 import re
-# Initialize locations with safety index set to 0
-def initialize_locations(location_list):
-    locations = {}
-    for loc in location_list:
-        locations[loc] = {'danger_index': 0}  # Initially store as danger index
-    return locations
+from typing import Dict, List, TypedDict
+from dataclasses import dataclass
+from enum import Enum
 
-# Compute danger index based on the CSV entry (direct severity extraction)
-def compute_danger_index(extracted_info):
-    severity = extracted_info.get('Severity', 1)  # Default to 1 if severity is missing
-    return severity
+class Severity(Enum):
+    LOW = 1
+    MEDIUM = 2
+    HIGH = 3
 
-# Update danger index based on extracted information from CSV
-def update_danger_index(area, danger_index, a, b, locations):
-    for loc in locations:
-        if loc == area:
-            # Direct danger impact for the crime location
-            new_danger = danger_index * a
-        else:
-            # Apply distance-based impact for other areas (using a dummy distance)
-            distance = 1  # Replace with actual distance if coordinates are available
-            new_danger = (danger_index * a) / (distance * b) if distance > 0 else 0
-        
-        locations[loc]['danger_index'] += new_danger
+@dataclass
+class LocationStats:
+    danger_index: float = 0.0
+    safety_index: float = 100.0
 
-# Parse CSV and extract relevant data for specific locations
-def parse_csv(file_path, target_areas):
-    extracted_data = []
-    with open(file_path, mode='r', encoding='utf-8') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            extracted_info = row['Extracted_Info']
+class SafetyCalculator:
+    def __init__(self, impact_factor: float = 1.0, distance_decay: float = 2.0):
+        self.impact_factor = impact_factor
+        self.distance_decay = distance_decay
+        self.locations: Dict[str, LocationStats] = {}
+
+    def initialize_locations(self, location_list: List[str]) -> None:
+        """Initialize locations with default safety stats."""
+        self.locations = {loc: LocationStats() for loc in location_list}
+
+    def compute_danger_index(self, severity: Severity) -> float:
+        """Compute danger index based on severity."""
+        return severity.value
+
+    def update_danger_index(self, area: str, danger_index: float) -> None:
+        """Update danger indices for all locations based on new incident."""
+        if area not in self.locations:
+            return
+
+        for loc in self.locations:
+            if loc == area:
+                # Direct impact for incident location
+                new_danger = danger_index * self.impact_factor
+            else:
+                # TODO: Implement actual distance calculation
+                distance = 1.0  # Placeholder for geometric distance
+                new_danger = (danger_index * self.impact_factor) / (distance * self.distance_decay)
             
-            # Use regex to extract 'Area' and 'Severity'
-            area_match = re.search(r"Area: (.+?)(?:,|$)", extracted_info)
-            severity_match = re.search(r"Severity: (\w+)", extracted_info)
+            current_stats = self.locations[loc]
+            current_stats.danger_index += new_danger
 
-            area = area_match.group(1) if area_match else "Unknown"
-            severity = severity_match.group(1).lower() if severity_match else "low"
+    def parse_csv(self, file_path: str, target_areas: List[str]) -> List[Dict]:
+        """Parse CSV file and extract relevant safety data."""
+        extracted_data = []
+        
+        try:
+            with open(file_path, mode='r', encoding='utf-8') as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    extracted_info = row.get('Extracted_Info', '')
+                    
+                    area_match = re.search(r"Area: (.+?)(?:,|$)", extracted_info)
+                    severity_match = re.search(r"Severity: (\w+)", extracted_info)
 
-            # Map severity levels to numerical values
-            severity_mapping = {"low": 1, "medium": 2, "high": 3}
-            severity_value = severity_mapping.get(severity, 1)
+                    if not area_match:
+                        continue
 
-            # Only keep data for the target areas
-            if area in target_areas:
-                extracted_data.append({
-                    "Area": area,
-                    "Severity": severity_value
-                })
+                    area = area_match.group(1).strip()
+                    if area not in target_areas:
+                        continue
 
-    return extracted_data
+                    severity_text = severity_match.group(1).upper() if severity_match else "LOW"
+                    try:
+                        severity = Severity[severity_text]
+                    except KeyError:
+                        severity = Severity.LOW
 
-# Normalize and invert safety indexes to a 0-100% scale (where 100% is safest)
-def normalize_and_invert_safety_indexes(locations, max_danger_score):
-    if max_danger_score == 0:
-        print("No data found to calculate maximum danger score. Skipping normalization.")
-        return
-    for loc in locations:
-        # Calculate the normalized danger index
-        normalized_danger_index = (locations[loc]['danger_index'] / max_danger_score) * 100
-        # Invert it to get a safety index (higher means safer)
-        locations[loc]['safety_index'] = 100 - min(normalized_danger_index, 100)
+                    extracted_data.append({
+                        "Area": area,
+                        "Severity": severity
+                    })
+                    
+        except FileNotFoundError:
+            print(f"Error: File '{file_path}' not found.")
+        except Exception as e:
+            print(f"Error processing CSV file: {str(e)}")
+            
+        return extracted_data
 
-# Example usage
-if __name__ == "__main__":
-    # Define the specific areas we're interested in
+    def normalize_safety_indexes(self, max_danger_score: float) -> None:
+        """Normalize and invert danger indexes to safety indexes (0-100%)."""
+        if max_danger_score <= 0:
+            print("Warning: Invalid maximum danger score. Skipping normalization.")
+            return
+
+        for loc, stats in self.locations.items():
+            normalized_danger = (stats.danger_index / max_danger_score) * 100
+            stats.safety_index = 100 - min(normalized_danger, 100)
+
+    def calculate_safety_indices(self, csv_path: str, target_areas: List[str]) -> Dict[str, float]:
+        """Main method to calculate safety indices for target areas."""
+        self.initialize_locations(target_areas)
+        extracted_data = self.parse_csv(csv_path, target_areas)
+
+        if not extracted_data:
+            print("No relevant data found in CSV for specified target areas.")
+            return {loc: stats.safety_index for loc, stats in self.locations.items()}
+
+        max_danger_score = Severity.HIGH.value * len(extracted_data)
+
+        for entry in extracted_data:
+            area = entry["Area"]
+            danger_index = self.compute_danger_index(entry["Severity"])
+            self.update_danger_index(area, danger_index)
+
+        self.normalize_safety_indexes(max_danger_score)
+        return {loc: stats.safety_index for loc, stats in self.locations.items()}
+
+def main():
+    # Example usage
     target_areas = ['Firdos Chowk', 'Lower Kurram']
+    calculator = SafetyCalculator(impact_factor=1.0, distance_decay=2.0)
     
-    # Parse the CSV to get extracted information specifically for target areas
-    csv_file_path = '1improved_processed_road_safety_tweets.csv'  # Update to your CSV path
-    extracted_info_list = parse_csv(csv_file_path, target_areas)
+    safety_indices = calculator.calculate_safety_indices(
+        '1improved_processed_road_safety_tweets.csv',
+        target_areas
+    )
+    
+    # print("\nSafety Indices for Target Areas:")
+    # for area, safety_index in safety_indices.items():
+    #     print(f"{area}: {safety_index:.2f}%")
 
-    # Initialize locations for the specific areas
-    locations = initialize_locations(target_areas)
-
-    # Check if extracted_info_list has data to process
-    if not extracted_info_list:
-        print("No relevant data found in the CSV for specified target areas.")
-    else:
-        # Update danger indexes based on each crime report in the CSV
-        a = 1.0
-        b = 2.0
-        max_danger_score = 3 * len(extracted_info_list)  # Assume maximum danger index (severity 3) for each entry
-
-        for info in extracted_info_list:
-            area = info.get('Area')
-            danger_index = compute_danger_index(info)
-            update_danger_index(area, danger_index, a, b, locations)
-
-        # Normalize and invert danger indexes to get safety indexes
-        normalize_and_invert_safety_indexes(locations, max_danger_score)
-
-    # Print the updated safety indexes for the specific areas
-    print(f"Updated safety indexes for specified areas: {locations}")
+if __name__ == "__main__":
+    main()

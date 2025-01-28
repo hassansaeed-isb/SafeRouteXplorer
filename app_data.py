@@ -1,198 +1,233 @@
 import os
 import csv
 import re
+import logging
+from typing import Dict, List, Set, Tuple, Optional
 import googlemaps
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, current_app
 from dotenv import load_dotenv
+from dataclasses import dataclass
 from route_safety_calculator import RouteSafetyCalculator
 
-load_dotenv()
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
+@dataclass
+class Incident:
+    area: str
+    severity: int
+    lat: float = 0.0
+    lng: float = 0.0
 
-# Initialize Google Maps Client
-gmaps_api_key = os.getenv("GOOGLE_MAPS_API_KEY")
-gmaps = googlemaps.Client(key=gmaps_api_key)
+class SafetyAnalyzer:
+    def __init__(self, csv_path: str):
+        self.csv_path = csv_path
+        self.severity_mapping = {"low": 1, "medium": 2, "high": 3}
+        self.locations: Dict[str, Dict[str, float]] = {}
+        self.a_factor = 1.0  # Factor for danger index calculation
+        self.b_factor = 2.0  # Factor for distance adjustment
 
-# Initialize Route Safety Calculator
-route_safety_calculator = RouteSafetyCalculator(gmaps, "1improved_processed_road_safety_tweets.csv")  # Path to your CSV
+    def parse_csv(self) -> Tuple[List[Incident], Set[str]]:
+        """Parse CSV file and extract incident information."""
+        extracted_data = []
+        areas = set()
 
-# Parse CSV to dynamically extract all unique areas and their severity
-def parse_csv(file_path):
-    extracted_data = []
-    areas = set()  # Use a set to store unique areas
+        try:
+            with open(self.csv_path, mode='r', encoding='utf-8') as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    incident = self._parse_incident(row['Extracted_Info'])
+                    if incident:
+                        extracted_data.append(incident)
+                        areas.add(incident.area)
+        except FileNotFoundError:
+            logger.error(f"CSV file not found: {self.csv_path}")
+            raise
+        except Exception as e:
+            logger.error(f"Error parsing CSV: {str(e)}")
+            raise
 
-    with open(file_path, mode='r', encoding='utf-8') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            extracted_info = row['Extracted_Info']
-            
-            # Use regex to extract 'Area' and 'Severity'
-            area_match = re.search(r"Area: (.+?)(?:,|$)", extracted_info)
-            severity_match = re.search(r"Severity: (\w+)", extracted_info)
+        return extracted_data, areas
 
-            area = area_match.group(1) if area_match else "Unknown"
-            severity = severity_match.group(1).lower() if severity_match else "low"
+    def _parse_incident(self, extracted_info: str) -> Optional[Incident]:
+        """Parse incident information from extracted info string."""
+        area_match = re.search(r"Area: (.+?)(?:,|$)", extracted_info)
+        severity_match = re.search(r"Severity: (\w+)", extracted_info)
 
-            # Map severity levels to numerical values
-            severity_mapping = {"low": 1, "medium": 2, "high": 3}
-            severity_value = severity_mapping.get(severity, 1)
+        if not area_match:
+            return None
 
-            # Add the area to the set to ensure uniqueness
-            areas.add(area)
+        area = area_match.group(1)
+        severity = severity_match.group(1).lower() if severity_match else "low"
+        severity_value = self.severity_mapping.get(severity, 1)
 
-            # Store the extracted info for each row
-            extracted_data.append({
-                "Area": area,
-                "Severity": severity_value
-            })
+        return Incident(area=area, severity=severity_value)
 
-    return extracted_data, list(areas)
+    def initialize_locations(self, areas: Set[str]) -> None:
+        """Initialize location dictionary with safety metrics."""
+        self.locations = {
+            area: {'danger_index': 0, 'safety_index': 0}
+            for area in areas
+        }
 
-# Geocode locations to get coordinates
-def geocode_location(location_name):
-    geocode_result = gmaps.geocode(location_name)
-    if geocode_result:
-        lat = geocode_result[0]['geometry']['location']['lat']
-        lng = geocode_result[0]['geometry']['location']['lng']
-        return lat, lng
-    else:
+    def update_danger_index(self, incident: Incident) -> None:
+        """Update danger index for locations based on incident."""
+        if incident.area not in self.locations:
+            self.locations[incident.area] = {'danger_index': 0, 'safety_index': 0}
+
+        for loc in self.locations:
+            if loc == incident.area:
+                new_danger = incident.severity * self.a_factor
+            else:
+                distance = 1  # TODO: Implement actual distance calculation
+                new_danger = (incident.severity * self.a_factor) / (distance * self.b_factor)
+            self.locations[loc]['danger_index'] += new_danger
+
+    def normalize_safety_indexes(self, max_danger_score: float) -> None:
+        """Normalize and invert safety indexes to 0-100% scale."""
+        if max_danger_score == 0:
+            return
+
+        for loc in self.locations:
+            normalized_danger = (self.locations[loc]['danger_index'] / max_danger_score) * 100
+            self.locations[loc]['safety_index'] = 100 - min(normalized_danger, 100)
+
+class SafeRouteApp:
+    def __init__(self):
+        load_dotenv()
+        self.app = Flask(__name__)
+        self.setup_app()
+
+    def setup_app(self):
+        """Initialize Flask application and configurations."""
+        self.gmaps_api_key = os.getenv("GOOGLE_MAPS_API_KEY")
+        if not self.gmaps_api_key:
+            raise ValueError("Google Maps API key not found in environment variables")
+
+        self.gmaps = googlemaps.Client(key=self.gmaps_api_key)
+        self.safety_calculator = RouteSafetyCalculator(
+            self.gmaps, 
+            "1improved_processed_road_safety_tweets.csv"
+        )
+        self.setup_routes()
+
+    def setup_routes(self):
+        """Set up Flask route handlers."""
+        self.app.route('/get_route_data')(self.get_route_data)
+        self.app.route('/get_locations')(self.get_locations)
+        self.app.route('/')(self.index)
+
+    def geocode_location(self, location_name: str) -> Tuple[Optional[float], Optional[float]]:
+        """Geocode location name to coordinates."""
+        try:
+            geocode_result = self.gmaps.geocode(location_name)
+            if geocode_result:
+                location = geocode_result[0]['geometry']['location']
+                return location['lat'], location['lng']
+        except Exception as e:
+            logger.error(f"Geocoding error for {location_name}: {str(e)}")
         return None, None
 
-# Initialize locations with danger_index and safety_index set to 0
-def initialize_locations(location_list):
-    locations = {}
-    for loc in location_list:
-        locations[loc] = {'danger_index': 0, 'safety_index': 0}
-    return locations
+    def get_route_data(self):
+        """Handle route data request."""
+        try:
+            origin = "Rawalpindi"
+            destination = "Islamabad"
+            logger.info(f"Fetching directions from {origin} to {destination}")
 
-# Update danger index based on extracted information from CSV
-def update_danger_index(area, danger_index, a, b, locations):
-    if area not in locations:
-        locations[area] = {'danger_index': 0, 'safety_index': 0}
+            # Fetch directions from Google Maps API
+            directions_result = self.gmaps.directions(
+                origin, 
+                destination, 
+                mode="driving", 
+                alternatives=True
+            )
+            logger.debug(f"Directions result: {directions_result}")
 
-    for loc in locations:
-        if loc == area:
-            new_danger = danger_index * a
-        else:
-            distance = 1  # Dummy distance for simplicity
-            new_danger = (danger_index * a) / (distance * b) if distance > 0 else 0
-        locations[loc]['danger_index'] += new_danger
+            if not directions_result:
+                logger.warning("No routes found")
+                return jsonify({'error': 'No routes found'}), 404
 
-# Normalize and invert safety indexes to a 0-100% scale (where 100% is safest)
-def normalize_and_invert_safety_indexes(locations, max_danger_score):
-    if max_danger_score == 0:
-        return
-    for loc in locations:
-        normalized_danger_index = (locations[loc]['danger_index'] / max_danger_score) * 100
-        locations[loc]['safety_index'] = 100 - min(normalized_danger_index, 100)
+            routes = []
+            danger_points = []
 
-# Initialize locations and calculate safety index
-csv_file_path = '1improved_processed_road_safety_tweets.csv'  # Path to your CSV
-extracted_info_list, target_areas = parse_csv(csv_file_path)
-locations = initialize_locations(target_areas)
+            for route in directions_result:
+                logger.debug(f"Processing route: {route}")
+                route_data = self._process_route(route)
+                routes.append(route_data)
+                danger_points.extend(route_data['danger_points'])
 
-a = 1.0  # Factor for danger index calculation
-b = 2.0  # Factor for distance adjustment
-max_danger_score = 3 * len(extracted_info_list)  # Maximum possible danger score
+            # logger.info("Route data fetched successfully")
+            return jsonify({
+                'routes': routes,
+                'danger_points': danger_points
+            })
 
-# Update danger indexes based on each incident in the CSV
-for info in extracted_info_list:
-    area = info.get('Area')
-    danger_index = info.get('Severity', 1)
-    update_danger_index(area, danger_index, a, b, locations)
+        except Exception as e:
+            logger.error(f"Error processing route data: {str(e)}", exc_info=True)
+            return jsonify({'error': 'Internal server error'}), 500
 
-# Normalize and invert danger indexes to get safety indexes
-normalize_and_invert_safety_indexes(locations, max_danger_score)
+    def _process_route(self, route):
+        """Process individual route data."""
+        route_coordinates = [
+            (step['end_location']['lat'], step['end_location']['lng'])
+            for leg in route['legs']
+            for step in leg['steps']
+        ]
 
-@app.route('/get_route_data')
-def get_route_data():
-    origin = "Rawalpindi"
-    destination = "Islamabad"
+        safety_index = self.safety_calculator.calculate_route_safety(route_coordinates) or 0
+        route_danger_points = self._get_route_danger_points(route_coordinates)
 
-    # Fetch directions using Google Maps Directions API
-    directions_result = gmaps.directions(origin, destination, mode="driving", alternatives=True)
+        return {
+            'legs': route['legs'],
+            'safety_index': safety_index,
+            'danger_points': route_danger_points
+        }
 
-    routes = []
-    danger_points = []
-
-    for route in directions_result:
-        route_coordinates = [(step['end_location']['lat'], step['end_location']['lng'])
-                            for leg in route['legs'] for step in leg['steps']]
-
-        # Calculate safety index for the route
-        safety_index = route_safety_calculator.calculate_route_safety(route_coordinates)
-
-        # Ensure that safety_index is being calculated for all routes
-        if safety_index is None:
-            safety_index = 0  # Or some default value if None
-
-        # Get danger points along the route
+    def _get_route_danger_points(self, route_coordinates):
+        """Get danger points along a route."""
         route_danger_points = []
-        for incident in route_safety_calculator.incident_locations:
+        for incident in self.safety_calculator.incident_locations:
             for route_point in route_coordinates:
-                distance = route_safety_calculator._calculate_distance(
-                    route_point[0], route_point[1], incident['lat'], incident['lng']
+                distance = self.safety_calculator._calculate_distance(
+                    route_point[0], route_point[1],
+                    incident['lat'], incident['lng']
                 )
-                if distance < 2:  # Only consider incidents within 2 km of the route
+                if distance < 2:  # Within 2 km of route
                     route_danger_points.append({
                         'lat': incident['lat'],
                         'lng': incident['lng'],
                         'name': incident.get('name', 'Unknown Location'),
                         'danger_index': incident['severity']
                     })
+        return route_danger_points
 
-            # Add to the danger points list
-            danger_points.append({
-                    'lat': incident['lat'],
-                    'lng': incident['lng'],
-                    'danger_index': incident['severity']
-                })
+    def get_locations(self):
+        """Handle locations data request."""
+        analyzer = SafetyAnalyzer("1improved_processed_road_safety_tweets.csv")
+        incidents, areas = analyzer.parse_csv()
+        analyzer.initialize_locations(areas)
 
-        danger_points.extend(route_danger_points)
-        
-        routes.append({
-            'legs': route['legs'],
-            'safety_index': safety_index,
-            'danger_points': route_danger_points
-        })
-
-    # # Deduplicate global danger points
-    # unique_danger_points = {f"{dp['lat']},{dp['lng']}": dp for dp in danger_points}.values()
-
-    # # Log danger points to console
-    # print("Danger Points:")
-    # for dp in unique_danger_points:
-    #     print(f"Name: {dp['name']}, Coordinates: ({dp['lat']}, {dp['lng']}), Danger Index: {dp['danger_index']}")
-
-    return jsonify({'routes': routes, 'danger_points': danger_points})
-
-
-@app.route('/get_locations')
-def get_locations():
-    locations_data = []
-    for area, data in locations.items():
-        lat, lng = geocode_location(area)
-        if lat and lng:
+        locations_data = []
+        for area, data in analyzer.locations.items():
+            lat, lng = self.geocode_location(area)
             locations_data.append({
                 "area": area,
                 "safety_index": data['safety_index'],
-                "lat": lat,
-                "lng": lng
-            })
-        else:
-            locations_data.append({
-                "area": area,
-                "safety_index": data['safety_index'],
-                "lat": 0,
-                "lng": 0
+                "lat": lat or 0,
+                "lng": lng or 0
             })
 
-    return jsonify(locations_data)
+        return jsonify(locations_data)
 
-@app.route('/')
-def index():
-    return render_template("index1.html", api_key=gmaps_api_key)
+    def index(self):
+        """Handle index page request."""
+        return render_template("index1.html", api_key=self.gmaps_api_key)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    safe_route_app = SafeRouteApp()
+    safe_route_app.app.run(debug=True)
