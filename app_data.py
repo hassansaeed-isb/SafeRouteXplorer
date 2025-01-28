@@ -11,10 +11,11 @@ from route_safety_calculator import RouteSafetyCalculator
 
 # Configure logging
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.CRITICAL,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+# logging.getLogger('urllib3').setLevel(logging.WARNING)
 
 @dataclass
 class Incident:
@@ -134,10 +135,14 @@ class SafeRouteApp:
 
     def get_route_data(self):
         """Handle route data request."""
+        # # Create a custom logger for this function
+        # route_data_logger = logging.getLogger('get_route_data_logger')
+        # route_data_logger.setLevel(logging.DEBUG)  # Set to INFO or DEBUG as needed
+
         try:
             origin = "Rawalpindi"
             destination = "Islamabad"
-            logger.info(f"Fetching directions from {origin} to {destination}")
+            # route_data_logger.info(f"Fetching directions from {origin} to {destination}")
 
             # Fetch directions from Google Maps API
             directions_result = self.gmaps.directions(
@@ -146,7 +151,7 @@ class SafeRouteApp:
                 mode="driving", 
                 alternatives=True
             )
-            logger.debug(f"Directions result: {directions_result}")
+            # route_data_logger.debug(f"Directions result: {directions_result}")
 
             if not directions_result:
                 logger.warning("No routes found")
@@ -156,19 +161,18 @@ class SafeRouteApp:
             danger_points = []
 
             for route in directions_result:
-                logger.debug(f"Processing route: {route}")
                 route_data = self._process_route(route)
                 routes.append(route_data)
                 danger_points.extend(route_data['danger_points'])
 
-            # logger.info("Route data fetched successfully")
+            # route_data_logger.info("Route data fetched successfully")
             return jsonify({
                 'routes': routes,
                 'danger_points': danger_points
             })
 
         except Exception as e:
-            logger.error(f"Error processing route data: {str(e)}", exc_info=True)
+            # route_data_logger.error(f"Error processing route data: {str(e)}", exc_info=True)
             return jsonify({'error': 'Internal server error'}), 500
 
     def _process_route(self, route):
@@ -195,14 +199,14 @@ class SafeRouteApp:
             for route_point in route_coordinates:
                 distance = self.safety_calculator._calculate_distance(
                     route_point[0], route_point[1],
-                    incident['lat'], incident['lng']
+                    incident.lat, incident.lng
                 )
                 if distance < 2:  # Within 2 km of route
                     route_danger_points.append({
-                        'lat': incident['lat'],
-                        'lng': incident['lng'],
-                        'name': incident.get('name', 'Unknown Location'),
-                        'danger_index': incident['severity']
+                        'lat': incident.lat,
+                        'lng': incident.lng,
+                        'name': getattr(incident, 'name', 'Unknown Location'),
+                        'danger_index': incident.severity
                     })
         return route_danger_points
 
