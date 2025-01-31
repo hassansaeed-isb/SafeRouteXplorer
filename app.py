@@ -4,7 +4,7 @@ import math
 
 app = Flask(__name__)
 
-GOOGLE_MAPS_API_KEY = "AIzaSyBheKlOr5vB1LNTyv2MrRsoUDSe7I1LXKA"
+GOOGLE_MAPS_API_KEY = "AIzaSyCzcuG-t-Frdw8v1BmFnDv_bJZQ47ndc44"
 gmaps = googlemaps.Client(key=GOOGLE_MAPS_API_KEY)
 
 # Hardcoded locations for ISB and RWP
@@ -145,7 +145,7 @@ def get_route_data():
 
 @app.route("/")
 def index():
-    return render_template("index1.html", api_key=GOOGLE_MAPS_API_KEY)
+    return render_template("test.html", api_key=GOOGLE_MAPS_API_KEY)
 
 
 if __name__ == "__main__":

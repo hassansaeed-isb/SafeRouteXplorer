@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Maps</title>
+    <style>
+        /* Add styles for the map container */
+        #map {
+            height: 400px; /* Adjust the map size */
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Map container -->
+    <div id="map"></div>
+
+    <!-- Google Maps API script -->
+    <script>
+        // Define the initMap function globally
+        function initMap() {
+            // Initialize the map with the specified coordinates
+            var map = new google.maps.Map(document.getElementById('map'), {
+                center: { lat: 33.6844, lng: 73.0479 }, // Example coordinates for Rawalpindi
+                zoom: 12
+            });
+        }
+    </script>
+
+    <!-- Google Maps API script with async and defer attributes -->
+    <script 
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA0FqutEq-sdZtgExYGQaIuk-gRM0ZJJaQ&callback=initMap" 
+        async 
+        defer>
+    </script>
+
+</body>
+</html>

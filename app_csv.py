@@ -13,7 +13,7 @@ app = Flask(__name__)
 # Initialize Google Maps Client
 gmaps_api_key = os.getenv("GOOGLE_MAPS_API_KEY")
 gmaps = googlemaps.Client(key=gmaps_api_key)
-
+# csv_file_path = os.path.join("data", "1improved_processed_road_safety_tweets.csv")
 # Initialize Route Safety Calculator
 route_safety_calculator = RouteSafetyCalculator(gmaps, "1improved_processed_road_safety_tweets.csv")  # Path to your CSV
 
@@ -192,7 +192,7 @@ def get_locations():
 
 @app.route('/')
 def index():
-    return render_template("index1.html", api_key=gmaps_api_key)
+    return render_template("index.html", api_key=gmaps_api_key)
 
 if __name__ == "__main__":
     app.run(debug=True)
