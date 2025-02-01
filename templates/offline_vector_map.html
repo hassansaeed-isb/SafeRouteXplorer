@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline Map - Pakistan</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+    <style>
+        #map {
+            height: 90vh;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Offline Map - Pakistan</h2>
+    <div id="map"></div>
+
+    <script>
+        var map = L.map('map').setView([30.3753, 69.3451], 6);  // Centered in Pakistan
+
+        // Offline Caching Fix: Use standard Leaflet TileLayer with browser caching
+        var tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        });
+
+        tileLayer.addTo(map);
+
+        // Load danger points from Flask API
+        fetch('/get_route_data')
+            .then(response => response.json())
+            .then(data => {
+                data.danger_points.forEach(point => {
+                    L.marker([point.lat, point.lng])
+                        .addTo(map)
+                        .bindPopup(`<b>${point.name}</b><br>Severity: ${point.severity}`);
+                });
+            })
+            .catch(error => console.error("Error loading danger points:", error));
+    </script>
+
+</body>
+</html>
