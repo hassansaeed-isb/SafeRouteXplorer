@@ -1,3 +1,5 @@
 cache/159e7d8ccb1ce2203a2dc41f562a14a34a40e2c3.json
 /cache
 /__pycache__
+__pycache__/route_safety_calculator.cpython-312.pyc
+*.pyc
