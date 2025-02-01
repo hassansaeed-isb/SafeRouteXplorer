@@ -1,11 +1,15 @@
 from flask import Flask, jsonify, render_template
 import googlemaps
 import math
-
+from dotenv import load_dotenv
+import os 
 app = Flask(__name__)
 
-GOOGLE_MAPS_API_KEY = "AIzaSyCzcuG-t-Frdw8v1BmFnDv_bJZQ47ndc44"
-gmaps = googlemaps.Client(key=GOOGLE_MAPS_API_KEY)
+load_dotenv()  
+
+# Load Google Maps API key from environment variable
+gmaps_api_key = os.getenv("GOOGLE_MAPS_API_KEY")
+gmaps = googlemaps.Client(key=gmaps_api_key)
 
 # Hardcoded locations for ISB and RWP
 HARDCODED_INCIDENTS = [
@@ -145,7 +149,7 @@ def get_route_data():
 
 @app.route("/")
 def index():
-    return render_template("test.html", api_key=GOOGLE_MAPS_API_KEY)
+    return render_template("index.html", api_key=gmaps_api_key)
 
 
 if __name__ == "__main__":
