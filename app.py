@@ -1,22 +1,30 @@
+import os
 from flask import Flask, jsonify, render_template
 import googlemaps
 import math
 from dotenv import load_dotenv
-import os 
+from route_safety_calculator import RouteSafetyCalculator
+
 app = Flask(__name__)
 
 load_dotenv()  
 
-# Load Google Maps API key from environment variable
+# Initialize Google Maps client
 gmaps_api_key = os.getenv("GOOGLE_MAPS_API_KEY")
 gmaps = googlemaps.Client(key=gmaps_api_key)
 
+# Initialize Route Safety Calculator
+safety_calculator = RouteSafetyCalculator(
+    gmaps, 
+    csv_file_path='1improved_processed_road_safety_tweets.csv'
+)
+
 # Hardcoded locations for ISB and RWP
 HARDCODED_INCIDENTS = [
-    # {"name": "Car Accident", "area": "F-8, Islamabad", "severity": 3, "lat": 33.6844, "lng": 73.0479},
-    # {"name": "Robbery", "area": "G-9, Islamabad", "severity": 2, "lat": 33.6846, "lng": 73.0586},
-    # {"name": "Traffic Jam", "area": "Rawalpindi Saddar", "severity": 1, "lat": 33.5968, "lng": 73.0476},
-    # {"name": "Street Fight", "area": "Rawalpindi Committee Chowk", "severity": 2, "lat": 33.6124, "lng": 73.0728},
+    {"name": "Car Accident", "area": "F-8, Islamabad", "severity": 3, "lat": 33.6844, "lng": 73.0479},
+    {"name": "Robbery", "area": "G-9, Islamabad", "severity": 2, "lat": 33.6846, "lng": 73.0586},
+    {"name": "Traffic Jam", "area": "Rawalpindi Saddar", "severity": 1, "lat": 33.5968, "lng": 73.0476},
+    {"name": "Street Fight", "area": "Rawalpindi Committee Chowk", "severity": 2, "lat": 33.6124, "lng": 73.0728},
     {"name": "Mugging", "area": "Rawalpindi Banni", "severity": 2, "lat": 33.5970, "lng": 73.0417},
     {"name": "Flooding", "area": "Murree Road, Rawalpindi", "severity": 4, "lat": 33.6312, "lng": 73.0657},
     {"name": "Accident", "area": "F-10, Islamabad", "severity": 2, "lat": 33.7047, "lng": 73.0456}
@@ -43,42 +51,9 @@ def calculate_distance(lat1, lon1, lat2, lon2):
 
     return R * c
 
-
-def calculate_route_safety(route_coordinates):
-    """
-    Calculate safety index for a specific route
-
-    :param route_coordinates: List of coordinates along the route
-    :return: Safety index for the route (0-100, higher is safer)
-    """
-    total_danger_score = 0
-
-    # Calculate danger based on each incident location
-    for incident in HARDCODED_INCIDENTS:
-        incident_lat, incident_lng = incident["lat"], incident["lng"]
-        danger_index = incident["severity"]
-
-        # Check minimum distance from route to incident
-        min_distance = float("inf")
-        for route_point in route_coordinates:
-            dist = calculate_distance(
-                route_point[0], route_point[1], incident_lat, incident_lng
-            )
-            min_distance = min(min_distance, dist)
-
-        # Calculate danger contribution
-        if min_distance > 0:
-            danger_contribution = (danger_index / min_distance) * 10
-            total_danger_score += danger_contribution
-
-    # Normalize and invert for safety score (0 to 100)
-    max_possible_score = 100  # Adjust to normalize better
-    normalized_score = min(total_danger_score / len(route_coordinates), max_possible_score)
-    safety_index = max(100 - normalized_score, 0)
-    safety_index =  100- safety_index 
-    return round(safety_index, 2)
-
-
+@app.route("/")
+def index():
+    return render_template("index.html", api_key=gmaps_api_key)
 
 @app.route("/get_route_data")
 def get_route_data():
@@ -103,10 +78,17 @@ def get_route_data():
                 for step in leg["steps"]
             ]
 
-            # Calculate safety index for the route
-            safety_index = calculate_route_safety(route_coordinates)
+            # Debug: Print route coordinates
+            # print(f"Route coordinates: {route_coordinates}")
 
-            # Get danger points along the route
+            # Use safety calculator to get safety index
+            safety_details = safety_calculator.calculate_route_safety(route_coordinates)
+            safety_index = safety_details['safety_index']
+
+            # Debug: Print safety index
+            # print(f"Safety index for route: {safety_index}")
+
+            # Get danger points along the route using existing logic
             route_danger_points = []
             for incident in HARDCODED_INCIDENTS:
                 for route_point in route_coordinates:
@@ -144,13 +126,8 @@ def get_route_data():
         return jsonify({"routes": routes, "danger_points": list(unique_danger_points)})
 
     except Exception as e:
+        print(f"Error in get_route_data: {str(e)}")
         return jsonify({"error": str(e)})
-
-
-@app.route("/")
-def index():
-    return render_template("index.html", api_key=gmaps_api_key)
-
 
 if __name__ == "__main__":
     app.run(debug=True)

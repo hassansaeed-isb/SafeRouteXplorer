@@ -4,33 +4,46 @@ import math
 import re
 import csv
 import logging
+from enum import Enum
 from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass
 from functools import lru_cache
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.CRITICAL)
 logger = logging.getLogger(__name__)
+
+class Severity(Enum):
+    """Enum for incident severity levels"""
+    LOW = 1
+    MEDIUM = 2
+    HIGH = 3
+
+class LocationCategory(Enum):
+    """Enum for location categories with safety multipliers"""
+    RESIDENTIAL = 1.0
+    COMMERCIAL = 1.2
+    SCHOOL = 2.0
+    HOSPITAL = 1.8
+    GOVERNMENT = 1.5
+    OTHER = 1.0
 
 @dataclass
 class Incident:
     """Data class for incident information"""
     name: str
     area: str
-    severity: int
+    severity: Severity
     lat: float
     lng: float
+    category: LocationCategory = LocationCategory.OTHER
 
 class RouteSafetyCalculator:
     """Calculator for determining the safety of routes based on incident data"""
 
-    SEVERITY_MAPPING = {
-        "low": 1,
-        "medium": 2,
-        "high": 3
-    }
     EARTH_RADIUS_KM = 6371  # Earth's radius in kilometers
     MAX_CACHE_SIZE = 1000   # Maximum size for LRU cache
+    CATEGORY_RADIUS_KM = 10.0  # Radius for category-based calculations
 
     def __init__(self, gmaps_client: googlemaps.Client, csv_file_path: str):
         """
@@ -39,17 +52,13 @@ class RouteSafetyCalculator:
         Args:
             gmaps_client: Google Maps client for route and geocoding operations
             csv_file_path: Path to CSV file with incident data
-        
-        Raises:
-            FileNotFoundError: If CSV file doesn't exist
-            ValueError: If CSV file is invalid or empty
         """
         self.gmaps = gmaps_client
         self.csv_file_path = csv_file_path
         
         # Hyperparameters for danger score calculation
-        self.impact_factor = 1.0    # Impact factor for danger index
-        self.distance_factor = 2.0  # Distance adjustment factor
+        self.impact_factor = 0.5    # Impact factor for danger index
+        self.distance_factor = 1.0  # Distance adjustment factor
         
         # Validate CSV file exists
         if not os.path.exists(csv_file_path):
@@ -64,21 +73,18 @@ class RouteSafetyCalculator:
         
         Returns:
             List[Incident]: List of incident objects
-        
-        Raises:
-            ValueError: If CSV data is invalid
         """
         incidents = []
         
-        # Add hardcoded known incidents
+        # Add hardcoded known incidents with categories
         hardcoded_incidents = [
-            Incident("Car Accident", "F-8, Islamabad", 3, 33.6844, 73.0479),
-            Incident("Robbery", "G-9, Islamabad", 2, 33.6846, 73.0586),
-            Incident("Pedestrian Hit", "I-10, Islamabad", 3, 33.7085, 73.0770),
-            Incident("Traffic Jam", "Rawalpindi Saddar", 1, 33.5968, 73.0476),
-            Incident("Street Fight", "Rawalpindi Committee Chowk", 2, 33.6124, 73.0728),
-            Incident("Mugging", "Rawalpindi Banni", 2, 33.5970, 73.0417),
-            Incident("Accident", "F-10, Islamabad", 2, 33.7047, 73.0456)
+            Incident("Car Accident", "F-8, Islamabad", Severity.HIGH, 33.6844, 73.0479, LocationCategory.COMMERCIAL),
+            Incident("Robbery", "G-9, Islamabad", Severity.MEDIUM, 33.6846, 73.0586, LocationCategory.RESIDENTIAL),
+            Incident("Pedestrian Hit", "I-10, Islamabad", Severity.HIGH, 33.7085, 73.0770, LocationCategory.SCHOOL),
+            Incident("Traffic Jam", "Rawalpindi Saddar", Severity.LOW, 33.5968, 73.0476, LocationCategory.GOVERNMENT),
+            Incident("Street Fight", "Rawalpindi Committee Chowk", Severity.MEDIUM, 33.6124, 73.0728, LocationCategory.COMMERCIAL),
+            Incident("Mugging", "Rawalpindi Banni", Severity.MEDIUM, 33.5970, 73.0417, LocationCategory.RESIDENTIAL),
+            Incident("Accident", "F-10, Islamabad", Severity.MEDIUM, 33.7047, 73.0456, LocationCategory.HOSPITAL)
         ]
         incidents.extend(hardcoded_incidents)
         
@@ -101,7 +107,7 @@ class RouteSafetyCalculator:
 
     def _parse_incident_row(self, row: Dict) -> Optional[Incident]:
         """
-        Parse a single incident row from CSV data
+        Parse a single incident row from CSV data with category detection
         
         Args:
             row: Dictionary containing row data
@@ -110,29 +116,42 @@ class RouteSafetyCalculator:
             Optional[Incident]: Parsed incident or None if invalid
         """
         try:
-            extracted_info = row['Extracted_Info']
+            extracted_info = row.get('Extracted_Info', '')
             
             # Extract information using regex
             area_match = re.search(r"Area: (.+?)(?:,|$)", extracted_info)
             severity_match = re.search(r"Severity: (\w+)", extracted_info)
             name_match = re.search(r"Name: (.+?)(?:,|$)", extracted_info)
+            category_match = re.search(r"Category: (\w+)", extracted_info)
 
             if not area_match:
                 # logger.warning(f"Could not extract area from: {extracted_info}")
                 return None
 
             area = area_match.group(1)
-            severity = severity_match.group(1).lower() if severity_match else "low"
+            severity_text = severity_match.group(1).upper() if severity_match else "LOW"
             name = name_match.group(1) if name_match else "Unnamed Incident"
+            
+            # Determine severity
+            try:
+                severity = Severity[severity_text]
+            except KeyError:
+                severity = Severity.LOW
 
-            severity_value = self.SEVERITY_MAPPING.get(severity, 1)
+            # Determine category
+            category_text = category_match.group(1).upper() if category_match else "OTHER"
+            try:
+                category = LocationCategory[category_text]
+            except KeyError:
+                category = LocationCategory.OTHER
+
             lat, lng = self._geocode_location(area)
             
             if lat == 0 and lng == 0:
                 # logger.warning(f"Could not geocode location: {area}")
                 return None
 
-            return Incident(name, area, severity_value, lat, lng)
+            return Incident(name, area, severity, lat, lng, category)
             
         except Exception as e:
             logger.error(f"Error parsing incident row: {str(e)}")
@@ -188,65 +207,107 @@ class RouteSafetyCalculator:
             logger.error(f"Error calculating distance: {str(e)}")
             return float('inf')
 
-    def calculate_route_safety(self, route_coordinates: List[Tuple[float, float]]) -> float:
+    def compute_category_multiplier(self, base_incident: Incident, target_incident: Incident, distance: float) -> float:
         """
-        Calculate safety index for a route
+        Compute category-based danger multiplier
         
         Args:
-            route_coordinates: List of route coordinate tuples
-            
+            base_incident: Incident causing danger
+            target_incident: Location being evaluated
+            distance: Distance between incidents
+        
         Returns:
-            float: Safety index (0-100, higher is safer)
-            
-        Raises:
-            ValueError: If route coordinates are invalid
+            float: Category-based multiplier
+        """
+        if distance > self.CATEGORY_RADIUS_KM:
+            return 1.0
+        
+        # Higher weight for sensitive categories
+        category_factor = target_incident.category.value
+        
+        # Distance-based scaling within category radius
+        distance_scale = 1 - (distance / self.CATEGORY_RADIUS_KM)
+        return 1.0 + (category_factor - 1.0) * distance_scale
+
+    def calculate_route_safety(self, route_coordinates: List[Tuple[float, float]]) -> Dict:
+        """
+        Calculate safety index for a route with category-aware calculations
         """
         if not route_coordinates or len(route_coordinates) < 2:
             raise ValueError("Invalid route coordinates provided")
 
         try:
             total_danger_score = 0
+            nearby_incidents = []
             
             # Calculate danger score for each incident
-            for incident in self.incident_locations:
+            for base_incident in self.incident_locations:
                 # Find minimum distance from route to incident
                 min_distance = min(
                     self._calculate_distance(
                         point[0], point[1],
-                        incident.lat, incident.lng
+                        base_incident.lat, base_incident.lng
                     )
                     for point in route_coordinates
                 )
                 
-                # Calculate danger contribution
-                if min_distance > 0:
-                    danger = (incident.severity * self.impact_factor) / (min_distance * self.distance_factor)
-                else:
-                    danger = incident.severity * self.impact_factor
-                    
+                # Adjust minimum distance to prevent division by very small numbers
+                min_distance = max(min_distance, 0.1)  # Minimum distance of 100m
+                
+                # Calculate base danger with softer falloff
+                base_danger = (base_incident.severity.value * self.impact_factor) / \
+                            (1 + min_distance * self.distance_factor)
+                
+                # Apply category multiplier only once per incident
+                category_multiplier = self.compute_category_multiplier(
+                    base_incident,
+                    Incident("Route Point", "Route", Severity.LOW, 
+                            route_coordinates[0][0], route_coordinates[0][1]),
+                    min_distance
+                )
+                
+                # Add to total danger score
+                danger = base_danger * category_multiplier
                 total_danger_score += danger
+                
+                # Track nearby incidents for reporting
+                if min_distance < 2.0:  # Within 2km
+                    nearby_incidents.append({
+                        'name': base_incident.name,
+                        'distance': round(min_distance, 2),
+                        'severity': base_incident.severity.name,
+                        'category': base_incident.category.name
+                    })
 
-            # Normalize to 0-100 scale
-            route_length = len(route_coordinates)
-            normalized_danger = min(total_danger_score / route_length, 100)
+            # Normalize using a logarithmic scale to prevent extremes
+            # Add 1 to avoid log(0)
+            normalized_danger = min(math.log(1 + total_danger_score) * 20, 100)
             safety_index = max(100 - normalized_danger, 0)
             
-            return round(safety_index, 2)
+            return {
+                'safety_index': round(safety_index, 2),
+                'nearby_incidents': nearby_incidents,
+                'danger_score': round(total_danger_score, 2)  # Added for debugging
+            }
             
         except Exception as e:
             logger.error(f"Error calculating route safety: {str(e)}")
-            return 0
-
-    def get_safest_route(self, start_location: str, end_location: str) -> Optional[Dict]:
+            return {
+                'safety_index': 50,  # Default to neutral instead of 0
+                'nearby_incidents': [],
+                'danger_score': 0
+            }
+    
+    def get_routes_with_safety(self, start_location: str, end_location: str) -> List[Dict]:
         """
-        Find the safest route between two locations
+        Find routes between two locations with safety analysis
         
         Args:
             start_location: Starting point
             end_location: Destination point
             
         Returns:
-            Optional[Dict]: Route information and safety index
+            List of routes with safety details
         """
         try:
             # Get directions from Google Maps
@@ -259,7 +320,7 @@ class RouteSafetyCalculator:
             
             if not directions:
                 # logger.warning(f"No routes found between {start_location} and {end_location}")
-                return None
+                return []
             
             # Calculate safety for each route
             routes_with_safety = []
@@ -270,15 +331,19 @@ class RouteSafetyCalculator:
                     for step in leg['steps']
                 ]
                 
-                safety_index = self.calculate_route_safety(coordinates)
+                safety_details = self.calculate_route_safety(coordinates)
+                
                 routes_with_safety.append({
                     'route': route,
-                    'safety_index': safety_index
+                    'safety_index': safety_details['safety_index'],
+                    'nearby_incidents': safety_details['nearby_incidents']
                 })
             
-            # Return the safest route
-            return max(routes_with_safety, key=lambda x: x['safety_index'])
+            # Sort routes by safety index (descending)
+            routes_with_safety.sort(key=lambda x: x['safety_index'], reverse=True)
+            
+            return routes_with_safety
             
         except Exception as e:
-            logger.error(f"Error finding safest route: {str(e)}")
-            return None
+            logger.error(f"Error finding routes: {str(e)}")
+            return []
