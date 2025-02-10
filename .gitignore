@@ -3,3 +3,4 @@
 *.pyc
 *.pyc
 __pycache__/route_safety_calculator.cpython-312.pyc
+/__pycache__
