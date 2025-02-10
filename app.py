@@ -11,13 +11,15 @@ load_dotenv()
 
 # Initialize Google Maps client
 gmaps_api_key = os.getenv("GOOGLE_MAPS_API_KEY")
-gmaps = googlemaps.Client(key=gmaps_api_key)
-
-# Initialize Route Safety Calculator
-safety_calculator = RouteSafetyCalculator(
-    gmaps, 
-    csv_file_path='1improved_processed_road_safety_tweets.csv'
-)
+try:
+    gmaps = googlemaps.Client(key=gmaps_api_key)
+    safety_calculator = RouteSafetyCalculator(gmaps, csv_file_path='1improved_processed_road_safety_tweets.csv')
+    ONLINE_MODE = True
+except Exception as e:
+    print(f"API initialization error: {str(e)}")
+    ONLINE_MODE = False
+    gmaps = None
+    safety_calculator = None
 
 # Hardcoded locations for ISB and RWP
 HARDCODED_INCIDENTS = [
@@ -53,10 +55,36 @@ def calculate_distance(lat1, lon1, lat2, lon2):
 
 @app.route("/")
 def index():
-    return render_template("index.html", api_key=gmaps_api_key)
+    if ONLINE_MODE:
+        try:
+            # Test the API key validity
+            test_result = gmaps.geocode("Islamabad")
+            if test_result:
+                return render_template("index.html", api_key=gmaps_api_key)
+        except Exception as e:
+            print(f"API key validation error: {str(e)}")
+    return render_template("offline_vector_map.html")
+    
+def get_offline_route_data():
+    return {
+        "routes": [{
+            "legs": [{
+                "start_location": {"lat": 33.6844, "lng": 73.0479},
+                "end_location": {"lat": 33.7294, "lng": 73.0931}
+            }],
+            "safety_index": 85.2,
+            "danger_points": HARDCODED_INCIDENTS,
+            "is_safest": True
+        }],
+        "danger_points": HARDCODED_INCIDENTS
+    }
+
 
 @app.route("/get_route_data")
 def get_route_data():
+    if not ONLINE_MODE:
+        return jsonify(get_offline_route_data())
+        
     origin = "Rawalpindi"
     destination = "Islamabad"
 
@@ -65,7 +93,7 @@ def get_route_data():
         directions_result = gmaps.directions(origin, destination, mode="driving", alternatives=True)
 
         if not directions_result:
-            return jsonify({"error": "No routes found."})
+            return jsonify(get_offline_route_data())
 
         routes = []
         danger_points = []
@@ -127,7 +155,7 @@ def get_route_data():
 
     except Exception as e:
         print(f"Error in get_route_data: {str(e)}")
-        return jsonify({"error": str(e)})
+        return jsonify(get_offline_route_data())
 
 if __name__ == "__main__":
     app.run(debug=True)

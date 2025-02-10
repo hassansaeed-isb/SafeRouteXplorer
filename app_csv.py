@@ -230,7 +230,7 @@ class SafeRouteApp:
 
     def index(self):
         """Handle index page request."""
-        return render_template("index1.html", api_key=self.gmaps_api_key)
+        return render_template("index.html", api_key=self.gmaps_api_key)
 
 if __name__ == "__main__":
     safe_route_app = SafeRouteApp()
