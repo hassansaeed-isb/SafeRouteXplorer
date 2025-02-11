@@ -1,16 +1,18 @@
 import os
+import pandas as pd
 from flask import Flask, jsonify, render_template
 import googlemaps
 import math
 from dotenv import load_dotenv
-from route_safety_calculator import RouteSafetyCalculator
+from route_safety_calculator import RouteSafetyCalculator  # Updated import name
 
 app = Flask(__name__)
 
-load_dotenv()  
+load_dotenv()
 
 # Initialize Google Maps client
 gmaps_api_key = os.getenv("GOOGLE_MAPS_API_KEY")
+
 try:
     gmaps = googlemaps.Client(key=gmaps_api_key)
     safety_calculator = RouteSafetyCalculator(gmaps, csv_file_path='1improved_processed_road_safety_tweets.csv')
@@ -21,7 +23,7 @@ except Exception as e:
     gmaps = None
     safety_calculator = None
 
-# Hardcoded locations for ISB and RWP
+# will rmeove this and ue csv dtaa for offline map as wlell
 HARDCODED_INCIDENTS = [
     {"name": "Car Accident", "area": "F-8, Islamabad", "severity": 3, "lat": 33.6844, "lng": 73.0479},
     {"name": "Robbery", "area": "G-9, Islamabad", "severity": 2, "lat": 33.6846, "lng": 73.0586},
@@ -31,7 +33,16 @@ HARDCODED_INCIDENTS = [
     {"name": "Flooding", "area": "Murree Road, Rawalpindi", "severity": 4, "lat": 33.6312, "lng": 73.0657},
     {"name": "Accident", "area": "F-10, Islamabad", "severity": 2, "lat": 33.7047, "lng": 73.0456}
 ]
-
+# Load incident data
+if safety_calculator:
+    try:
+        incident_data = safety_calculator.incident_locations  # Fetch loaded incidents
+        print(f"Loaded {len(incident_data)} incidents.")
+    except Exception as e:
+        print(f"Error loading incident data: {str(e)}")
+        incident_data = []
+else:
+    incident_data = []
 
 def calculate_distance(lat1, lon1, lat2, lon2):
     """
@@ -39,7 +50,7 @@ def calculate_distance(lat1, lon1, lat2, lon2):
 
     :return: Distance in kilometers
     """
-    R = 6371 
+    R = 6371
 
     lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
 
@@ -93,7 +104,7 @@ def get_route_data():
         directions_result = gmaps.directions(origin, destination, mode="driving", alternatives=True)
 
         if not directions_result:
-            return jsonify(get_offline_route_data())
+            return jsonify({"routes": [], "danger_points": incident_data})
 
         routes = []
         danger_points = []
@@ -118,20 +129,20 @@ def get_route_data():
 
             # Get danger points along the route using existing logic
             route_danger_points = []
-            for incident in HARDCODED_INCIDENTS:
-                for route_point in route_coordinates:
-                    distance = calculate_distance(
-                        route_point[0], route_point[1], incident["lat"], incident["lng"]
-                    )
-                    if distance < 2:  # Only consider incidents within 2 km of the route
-                        route_danger_points.append(
-                            {
-                                "lat": incident["lat"],
-                                "lng": incident["lng"],
-                                "name": incident.get("name", "Unknown Location"),
-                                "danger_index": incident["severity"],
-                            }
-                        )
+            for incident in incident_data:
+                try:
+                    lat, lng = incident.lat, incident.lng
+                    for route_point in route_coordinates:
+                        distance = calculate_distance(route_point[0], route_point[1], lat, lng)
+                        if distance < 2:  # Consider incidents within 2 km _-_ only displaying points within 2 km radius
+                            route_danger_points.append({
+                                "lat": lat,
+                                "lng": lng,
+                                "name": incident.name,
+                                "danger_index": incident.severity.value,  # Convert Enum to int
+                            })
+                except ValueError:
+                    print(f"Invalid incident data skipped: {incident}")
 
             danger_points.extend(route_danger_points)
 
@@ -148,6 +159,7 @@ def get_route_data():
 
         # Determine the safest route
         safest_route_index = max(range(len(routes)), key=lambda i: routes[i]["safety_index"])
+
         for i, route in enumerate(routes):
             route["is_safest"] = (i == safest_route_index)
 
@@ -155,7 +167,7 @@ def get_route_data():
 
     except Exception as e:
         print(f"Error in get_route_data: {str(e)}")
-        return jsonify(get_offline_route_data())
+        return jsonify({"routes": [], "danger_points": incident_data})
 
 if __name__ == "__main__":
     app.run(debug=True)
