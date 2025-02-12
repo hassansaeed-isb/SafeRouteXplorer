@@ -4,7 +4,8 @@ from flask import Flask, jsonify, render_template
 import googlemaps
 import math
 from dotenv import load_dotenv
-from route_safety_calculator import RouteSafetyCalculator  # Updated import name
+from route_safety_calculator import RouteSafetyCalculator
+from offline_mode import OfflineMode
 
 app = Flask(__name__)
 
@@ -12,27 +13,19 @@ load_dotenv()
 
 # Initialize Google Maps client
 gmaps_api_key = os.getenv("GOOGLE_MAPS_API_KEY")
+gmaps = googlemaps.Client(key=gmaps_api_key)
+csv_file_path= os.getenv("CSV_FILE_PATH")
 
 try:
-    gmaps = googlemaps.Client(key=gmaps_api_key)
-    safety_calculator = RouteSafetyCalculator(gmaps, csv_file_path='1improved_processed_road_safety_tweets.csv')
+    safety_calculator = RouteSafetyCalculator(gmaps, csv_file_path)
     ONLINE_MODE = True
 except Exception as e:
-    print(f"API initialization error: {str(e)}")
+    # print(f"API initialization error: {str(e)}")
+    incident_loader = OfflineMode(gmaps, csv_file_path)
     ONLINE_MODE = False
     gmaps = None
     safety_calculator = None
 
-# will rmeove this and ue csv dtaa for offline map as wlell
-HARDCODED_INCIDENTS = [
-    {"name": "Car Accident", "area": "F-8, Islamabad", "severity": 3, "lat": 33.6844, "lng": 73.0479},
-    {"name": "Robbery", "area": "G-9, Islamabad", "severity": 2, "lat": 33.6846, "lng": 73.0586},
-    {"name": "Traffic Jam", "area": "Rawalpindi Saddar", "severity": 1, "lat": 33.5968, "lng": 73.0476},
-    {"name": "Street Fight", "area": "Rawalpindi Committee Chowk", "severity": 2, "lat": 33.6124, "lng": 73.0728},
-    {"name": "Mugging", "area": "Rawalpindi Banni", "severity": 2, "lat": 33.5970, "lng": 73.0417},
-    {"name": "Flooding", "area": "Murree Road, Rawalpindi", "severity": 4, "lat": 33.6312, "lng": 73.0657},
-    {"name": "Accident", "area": "F-10, Islamabad", "severity": 2, "lat": 33.7047, "lng": 73.0456}
-]
 # Load incident data
 if safety_calculator:
     try:
@@ -42,7 +35,10 @@ if safety_calculator:
         print(f"Error loading incident data: {str(e)}")
         incident_data = []
 else:
-    incident_data = []
+    incident_data = [
+        {"name": inc.name, "lat": inc.lat, "lng": inc.lng, "severity": inc.severity.name}
+        for inc in incident_loader.incident_locations
+    ]
 
 def calculate_distance(lat1, lon1, lat2, lon2):
     """
@@ -84,10 +80,10 @@ def get_offline_route_data():
                 "end_location": {"lat": 33.7294, "lng": 73.0931}
             }],
             "safety_index": 85.2,
-            "danger_points": HARDCODED_INCIDENTS,
+            "danger_points": incident_data,
             "is_safest": True
         }],
-        "danger_points": HARDCODED_INCIDENTS
+        "danger_points": incident_data
     }
 
 
