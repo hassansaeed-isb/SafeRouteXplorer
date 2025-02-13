@@ -165,6 +165,72 @@
             line-height: 1.5;
         }
 
+        /* Input for start and enf locations*/
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input:focus {
+            border-color: #4CAF50;
+            outline: none;
+        }
+
+        #location-form .btn-primary {
+            width: 100%;
+            margin-top: 10px;
+            padding: 14px;
+        }
     </style>
     
     
@@ -204,12 +270,58 @@
             // Initialize DirectionsService
             directionsService = new google.maps.DirectionsService();
 
+            // Initialize modal functionality
+            initializeModal();
+
             // Fetch and display the routes
             fetchRoutes();
         }
 
-        function fetchRoutes() {
-            fetch('/get_route_data') // Fetch route data from Flask backend
+        function initializeModal() {
+            const modal = document.getElementById("location-modal");
+            const locationBtn = document.querySelector('.nav-buttons .btn:last-child');
+            const closeBtn = document.querySelector(".close-btn");
+            const locationForm = document.getElementById("location-form");
+
+            if (locationBtn && modal && closeBtn && locationForm) {
+                // Show modal when the button is clicked
+                locationBtn.addEventListener("click", () => {
+                    modal.style.display = "block";
+                });
+
+                // Close modal when clicking the close button
+                closeBtn.addEventListener("click", () => {
+                    modal.style.display = "none";
+                });
+
+                // Close modal when clicking outside
+                window.addEventListener("click", (event) => {
+                    if (event.target === modal) {
+                        modal.style.display = "none";
+                    }
+                });
+
+                // Handle form submission
+                locationForm.addEventListener("submit", (e) => {
+                    e.preventDefault();
+                    const startLocation = document.getElementById("start-location").value;
+                    const endLocation = document.getElementById("end-location").value;
+                    
+                    // Update the route display title
+                    document.querySelector(".safest-route-display h3").textContent = 
+                        `Safest Route from ${startLocation} to ${endLocation}`;
+                    
+                    // Call fetchRoutes with new locations
+                    fetchRoutes(startLocation, endLocation);
+                    
+                    // Close the modal
+                    modal.style.display = "none";
+                });
+            }
+        }
+
+        function fetchRoutes(startLocation = "Rawalpindi", endLocation = "Islamabad") {
+            fetch('/get_route_data')
                 .then(response => response.json())
                 .then(data => {
                     if (data.error) {
@@ -227,8 +339,8 @@
 
                     // Create request for directions service
                     const request = {
-                        origin: "Rawalpindi", // Starting location
-                        destination: "Islamabad", // Ending location
+                        origin: startLocation,
+                        destination: endLocation,
                         travelMode: google.maps.TravelMode.DRIVING,
                         provideRouteAlternatives: true
                     };
@@ -237,24 +349,22 @@
                     directionsService.route(request, function(response, status) {
                         if (status === 'OK') {
                             const routesContainer = document.getElementById('routes-container');
-                            routesContainer.innerHTML = ''; // Clear existing route information
+                            routesContainer.innerHTML = '';
 
                             response.routes.forEach((route, index) => {
-                                // Create a new DirectionsRenderer for each route
                                 const renderer = new google.maps.DirectionsRenderer({
                                     map: map,
                                     directions: response,
                                     routeIndex: index,
                                     polylineOptions: {
-                                        strokeColor: index === safestRouteIndex ? '#4CAF50' : '#FF0000', // Green for safest route, red for others
+                                        strokeColor: index === safestRouteIndex ? '#4CAF50' : '#FF0000',
                                         strokeWeight: index === safestRouteIndex ? 6 : 4,
                                         strokeOpacity: index === safestRouteIndex ? 1.0 : 0.7
                                     },
-                                    suppressMarkers: true // We handle our own markers
+                                    suppressMarkers: true
                                 });
                                 directionsRenderers.push(renderer);
 
-                                // Add route information to the container
                                 const routeInfo = document.createElement('div');
                                 routeInfo.className = `route-info ${index === safestRouteIndex ? 'safest-route' : ''}`;
                                 routeInfo.innerHTML = ` 
@@ -266,7 +376,7 @@
                                 routesContainer.appendChild(routeInfo);
                             });
 
-                            // Add markers for all danger points (CSV + Manual points)
+                            // Add markers for danger points
                             data.danger_points.forEach(point => {
                                 new google.maps.Marker({
                                     position: { lat: point.lat, lng: point.lng },
@@ -294,7 +404,6 @@
                                 });
                             });
 
-                            // Add danger points to bounds
                             data.danger_points.forEach(point => {
                                 bounds.extend(new google.maps.LatLng(point.lat, point.lng));
                             });
@@ -314,16 +423,34 @@
 
         function clearRoutes() {
             directionsRenderers.forEach(renderer => {
-                renderer.setMap(null);  // Remove the route from the map
+                renderer.setMap(null);
             });
-            directionsRenderers = []; // Reset the array for next routes
+            directionsRenderers = [];
         }
 
         function getColorForDangerIndex(dangerIndex) {
-            if (dangerIndex === 3) return "red";    // High danger
-            if (dangerIndex === 2) return "orange"; // Medium danger
-            return "yellow";   // Low danger
+            if (dangerIndex === 3) return "red";
+            if (dangerIndex === 2) return "orange";
+            return "yellow";
         }
     </script>
+
+    <div id="location-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Set Route Locations</h2>
+            <form id="location-form">
+                <div class="input-group">
+                    <label for="start-location">Start Location:</label>
+                    <input type="text" id="start-location" name="start-location" required placeholder="Enter starting point">
+                </div>
+                <div class="input-group">
+                    <label for="end-location">End Location:</label>
+                    <input type="text" id="end-location" name="end-location" required placeholder="Enter destination">
+                </div>
+                <button type="submit" class="btn-primary">Find Safe Routes</button>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
