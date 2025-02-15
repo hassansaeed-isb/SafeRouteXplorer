@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>SafeRoute - Dynamic Destination</title>
-  <!-- The same or updated Google Maps script: -->
+  <!-- Google Maps API with your API key -->
   <script src="https://maps.googleapis.com/maps/api/js?key={{ api_key }}&callback=initMap" async defer></script>
-
   <style>
     body { margin:0; padding:0; font-family: Arial, sans-serif; background:#f9f9f9; }
     #main-container { max-width:1200px; margin:20px auto; padding:20px; }
@@ -32,6 +31,21 @@
       margin-right:8px; margin-top:10px;
     }
     .btn:hover { background:#2e7d32; transform:translateY(-2px); }
+    /* Enhanced notification (toast) styling with danger look */
+    #notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(45deg, #ff4e50, #f9d423);
+      color: #fff;
+      padding: 15px 25px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      z-index: 1000;
+      display: none;
+      font-size: 1.2em;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -45,11 +59,21 @@
 
     <button id="start-nav" class="btn" style="display:none;">Start Navigation</button>
     <button id="stop-nav" class="btn" style="display:none;">Stop Navigation</button>
+    <!-- Button to simulate movement for demonstration -->
+    <button id="simulate-movement" class="btn" style="display:inline-block;">Simulate Movement</button>
 
     <div id="nav-info">No navigation active.</div>
     <div id="map" style="margin-top:20px;"></div>
     <div id="routes-container"></div>
   </div>
+
+  <!-- Notification container -->
+  <div id="notification"></div>
+  <!-- Audio element for alert sound -->
+  <audio id="alertSound">
+    <source src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" type="audio/ogg">
+    <source src="https://actions.google.com/sounds/v1/alarms/alarm_clock.mp3" type="audio/mpeg">
+  </audio>
 
   <script>
     let map;
@@ -59,9 +83,31 @@
     let userMarker = null;
     let watchId = null;
     let navStartTime = null;
-
     let directionsService;
-    let currentDestination = "Islamabad"; // We'll read from the input
+    let currentDestination = "Islamabad"; // read from input
+
+    // Global danger points received from backend
+    let dangerPointsData = [];
+    // Set to track incidents already notified (each danger point alerts only once)
+    let notifiedCrimes = new Set();
+
+    // For simulation demo: preset simulated path (adjust these points as needed)
+    const simulatedPath = [
+      { lat: 33.6844, lng: 73.0479 },
+      { lat: 33.6900, lng: 73.0485 },
+      { lat: 33.6950, lng: 73.0490 },
+      { lat: 33.7000, lng: 73.0500 }, // near Demo Incident 1 (backend)
+      { lat: 33.7050, lng: 73.0520 },
+      { lat: 33.7100, lng: 73.0530 },
+      { lat: 33.7150, lng: 73.0550 },
+      { lat: 33.7200, lng: 73.0600 }  // near Demo Incident 2 (backend)
+    ];
+    let simulationIndex = 0;
+    let simulationInterval = null;
+    // Variables to track cumulative distance for generic demo incidents.
+    let simulationCumulativeDistance = 0; // in km
+    let simulationLastPos = null;
+    let nextDemoThreshold = 3; // every 3 km
 
     function initMap() {
       map = new google.maps.Map(document.getElementById("map"), {
@@ -73,6 +119,7 @@
       document.getElementById("fetch-routes-btn").addEventListener("click", fetchRoutesFromUserLoc);
       document.getElementById("start-nav").addEventListener("click", startNavigation);
       document.getElementById("stop-nav").addEventListener("click", stopNavigation);
+      document.getElementById("simulate-movement").addEventListener("click", simulateMovement);
     }
 
     function fetchRoutesFromUserLoc() {
@@ -87,8 +134,6 @@
         pos => {
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
-
-          // pass 'destination' in the query
           const url = `/get_route_data?origin_lat=${lat}&origin_lng=${lng}&destination=${encodeURIComponent(currentDestination)}`;
           fetch(url)
             .then(resp => resp.json())
@@ -97,8 +142,9 @@
                 alert(data.error);
                 return;
               }
-              // data.routes => array of routes with .path
-              // data.destination => the actual place used
+              // Save danger points (including forced demo incidents from backend)
+              dangerPointsData = data.danger_points;
+
               allRoutes = data.routes;
               clearPolylines();
 
@@ -132,12 +178,12 @@
                 routesContainer.appendChild(card);
               });
 
-              // Danger points
-              (data.danger_points || []).forEach(dp => {
+              // Place markers for danger points
+              dangerPointsData.forEach(dp => {
                 new google.maps.Marker({
                   position: { lat: dp.lat, lng: dp.lng },
                   map: map,
-                  title: `${dp.name} (Severity:${dp.danger_index})`,
+                  title: `${dp.name} (Severity: ${dp.danger_index})`,
                   icon: {
                     path: google.maps.SymbolPath.CIRCLE,
                     fillColor: getDangerColor(dp.danger_index),
@@ -148,19 +194,18 @@
                 });
               });
 
-              // Fit map bounds
+              // Fit map bounds to include route and danger points
               const bounds = new google.maps.LatLngBounds();
               routePolylines.forEach(poly => {
                 poly.getPath().forEach(ll => bounds.extend(ll));
               });
-              (data.danger_points||[]).forEach(dp => bounds.extend({ lat: dp.lat, lng: dp.lng }));
+              dangerPointsData.forEach(dp => bounds.extend({ lat: dp.lat, lng: dp.lng }));
               map.fitBounds(bounds);
 
-              // pick safest route by default
+              // Pick safest route by default
               chosenRouteIndex = allRoutes.findIndex(r => r.is_safest);
               if (chosenRouteIndex < 0) chosenRouteIndex = 0;
 
-              // Show start nav button
               document.getElementById("start-nav").style.display = "inline-block";
               document.getElementById("stop-nav").style.display = "none";
               document.getElementById("nav-info").innerText = `Routes loaded for destination: ${data.destination}. Pick a route, then Start Navigation.`;
@@ -186,18 +231,18 @@
     function selectRoute(index) {
       chosenRouteIndex = index;
       allRoutes.forEach((r, i) => {
-        let color = (i===chosenRouteIndex) ? "#4CAF50" : "#FF0000";
+        let color = (i === chosenRouteIndex) ? "#4CAF50" : "#FF0000";
         routePolylines[i].setOptions({
           strokeColor: color,
-          strokeWeight: (i===chosenRouteIndex)? 6 : 4
+          strokeWeight: (i === chosenRouteIndex) ? 6 : 4
         });
       });
     }
 
-    function getDangerColor(sev){
-      if (sev>=4) return "red";
-      if (sev===3) return "orange";
-      if (sev===2) return "yellow";
+    function getDangerColor(sev) {
+      if (sev >= 4) return "red";
+      if (sev === 3) return "orange";
+      if (sev === 2) return "yellow";
       return "green";
     }
 
@@ -207,16 +252,16 @@
         return;
       }
       navStartTime = Date.now();
-      document.getElementById("nav-info").innerText = `Navigation started on Route #${chosenRouteIndex+1} to ${currentDestination}.`;
+      document.getElementById("nav-info").innerText = `Navigation started on Route #${chosenRouteIndex + 1} to ${currentDestination}.`;
 
       // Hide other routes
       routePolylines.forEach((poly, i) => {
-        if (i!==chosenRouteIndex) poly.setMap(null);
+        if (i !== chosenRouteIndex) poly.setMap(null);
         else {
           poly.setOptions({
-            strokeColor:"#4CAF50",
-            strokeWeight:6,
-            strokeOpacity:1.0
+            strokeColor: "#4CAF50",
+            strokeWeight: 6,
+            strokeOpacity: 1.0
           });
         }
       });
@@ -232,36 +277,37 @@
 
           if (!userMarker) {
             userMarker = new google.maps.Marker({
-              position:newPos,
-              map:map,
-              icon:"http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-              title:"You"
+              position: newPos,
+              map: map,
+              icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+              title: "You"
             });
           } else {
             userMarker.setPosition(newPos);
           }
           map.setCenter(newPos);
-
           updateNavInfo(newPos);
+          // Check for backend danger points near current position.
+          checkNearbyCrimes(newPos);
         },
         err => {
           console.error("watchPosition error:", err);
           alert("Cannot track your position in real-time.");
         },
-        { enableHighAccuracy:true }
+        { enableHighAccuracy: true }
       );
     }
 
     function stopNavigation() {
-      if (watchId!==null) {
+      if (watchId !== null) {
         navigator.geolocation.clearWatch(watchId);
-        watchId=null;
+        watchId = null;
       }
       if (userMarker) {
         userMarker.setMap(null);
-        userMarker=null;
+        userMarker = null;
       }
-      navStartTime=null;
+      navStartTime = null;
       document.getElementById("nav-info").innerText = "Navigation stopped.";
       document.getElementById("start-nav").style.display = "inline-block";
       document.getElementById("stop-nav").style.display = "none";
@@ -269,25 +315,24 @@
 
     function updateNavInfo(currentPos) {
       if (!navStartTime) return;
-      // Now we reference currentDestination
       const request = {
         origin: currentPos,
         destination: currentDestination,
         travelMode: google.maps.TravelMode.DRIVING
       };
       directionsService.route(request, (resp, status) => {
-        if (status==="OK") {
+        if (status === "OK") {
           const leg = resp.routes[0].legs[0];
           const dist = leg.distance.text;
           const dur = leg.duration.text;
 
           const elapsedMs = Date.now() - navStartTime;
-          let sec = Math.floor(elapsedMs/1000);
-          const hh = Math.floor(sec/3600);
-          sec%=3600;
-          const mm = Math.floor(sec/60);
-          const ss = sec%60;
-          let elapsedStr = `${hh>0?hh+'h ':''}${mm>0?mm+'m ':''}${ss}s`;
+          let sec = Math.floor(elapsedMs / 1000);
+          const hh = Math.floor(sec / 3600);
+          sec %= 3600;
+          const mm = Math.floor(sec / 60);
+          const ss = sec % 60;
+          let elapsedStr = `${hh > 0 ? hh + 'h ' : ''}${mm > 0 ? mm + 'm ' : ''}${ss}s`;
 
           document.getElementById("nav-info").innerHTML = `
             <strong>Distance to ${currentDestination}:</strong> ${dist}<br>
@@ -296,6 +341,100 @@
           `;
         }
       });
+    }
+
+    // Haversine formula helper functions (in km)
+    function toRad(deg) {
+      return deg * Math.PI / 180;
+    }
+    function haversine(lat1, lng1, lat2, lng2) {
+      const R = 6371; // km
+      const dLat = toRad(lat2 - lat1);
+      const dLng = toRad(lng2 - lng1);
+      const a = Math.sin(dLat / 2) ** 2 +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                Math.sin(dLng / 2) ** 2;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    // Check if any backend danger point is within 2km of the current position.
+    function checkNearbyCrimes(currentPos) {
+      if (!dangerPointsData || dangerPointsData.length === 0) return;
+      dangerPointsData.forEach(dp => {
+        const distance = haversine(currentPos.lat(), currentPos.lng(), dp.lat, dp.lng);
+        if (distance <= 2) {
+          const dpKey = dp.lat + "_" + dp.lng;
+          if (!notifiedCrimes.has(dpKey)) {
+            notifiedCrimes.add(dpKey);
+            showNotification(`Crime Alert: ${dp.name} reported near ${dp.area}.`);
+          }
+        }
+      });
+    }
+
+    // Display an enhanced notification (toast) with sound.
+    function showNotification(message) {
+      // Play sound
+      document.getElementById("alertSound").play();
+      // Update notification text and show it.
+      const notif = document.getElementById("notification");
+      notif.innerText = message;
+      notif.style.display = "block";
+      // Hide after 5 seconds.
+      setTimeout(() => {
+        notif.style.display = "none";
+      }, 5000);
+    }
+
+    // For demonstration: Simulate user movement along a preset path.
+    function simulateMovement() {
+      if (simulationInterval) return; // prevent multiple clicks
+      simulationIndex = 0;
+      // Reset simulation distance tracking for generic demo incidents.
+      simulationCumulativeDistance = 0;
+      simulationLastPos = null;
+      nextDemoThreshold = 3;
+      // Clear previous notified crimes (for demo clarity).
+      notifiedCrimes.clear();
+
+      simulationInterval = setInterval(() => {
+        if (simulationIndex >= simulatedPath.length) {
+          clearInterval(simulationInterval);
+          simulationInterval = null;
+          return;
+        }
+        const pos = simulatedPath[simulationIndex];
+        const newPos = new google.maps.LatLng(pos.lat, pos.lng);
+        if (!userMarker) {
+          userMarker = new google.maps.Marker({
+            position: newPos,
+            map: map,
+            icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+            title: "You (Simulated)"
+          });
+        } else {
+          userMarker.setPosition(newPos);
+        }
+        map.setCenter(newPos);
+        updateNavInfo(newPos);
+        // Check for backend danger points near current position.
+        checkNearbyCrimes(newPos);
+
+        // --- Generic demo incident alert every 3 km ---
+        if (!simulationLastPos) {
+          simulationLastPos = pos;
+        } else {
+          let dist = haversine(simulationLastPos.lat, simulationLastPos.lng, pos.lat, pos.lng);
+          simulationCumulativeDistance += dist;
+          simulationLastPos = pos;
+          if (simulationCumulativeDistance >= nextDemoThreshold) {
+            showNotification(`Demo Incident: Crime reported at approximately ${nextDemoThreshold} km from start.`);
+            nextDemoThreshold += 3;
+          }
+        }
+        simulationIndex++;
+      }, 2000); // update every 2 seconds
     }
   </script>
 </body>
