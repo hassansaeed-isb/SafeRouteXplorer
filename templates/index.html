@@ -260,18 +260,16 @@
         let dangerPointsData = [];
         let notifiedCrimes = new Set();
         let currentDestination = "Islamabad";
+        
 
         // Simulation variables
         const simulatedPath = [
-            { lat: 33.6844, lng: 73.0479 },
-            { lat: 33.6900, lng: 73.0485 },
-            { lat: 33.6950, lng: 73.0490 },
-            { lat: 33.7000, lng: 73.0500 },
-            { lat: 33.7050, lng: 73.0520 },
-            { lat: 33.7100, lng: 73.0530 },
-            { lat: 33.7150, lng: 73.0550 },
-            { lat: 33.7200, lng: 73.0600 }
-        ];
+    { lat: 33.6844, lng: 73.0479 }, // Starting point
+    { lat: 33.6922, lng: 73.0490 }, // Moving towards Demo Zone 1
+    { lat: 33.7000, lng: 73.0500 }, // Demo Incident 1 location
+    { lat: 33.7100, lng: 73.0550 }, // Moving between points
+    { lat: 33.7200, lng: 73.0600 }  // Demo Incident 2 location
+];
         let simulationIndex = 0;
         let simulationInterval = null;
 
@@ -539,51 +537,67 @@
         }
 
         function haversine(lat1, lng1, lat2, lng2) {
-            const R = 6371; // Earth's radius in km
-            const dLat = toRad(lat2 - lat1);
-            const dLng = toRad(lng2 - lng1);
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * 
-                    Math.sin(dLng/2) * Math.sin(dLng/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c;
-        }
+    const R = 6371; // Earth's radius in km
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const lat1Rad = toRad(lat1);
+    const lat2Rad = toRad(lat2);
+    
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1Rad) * Math.cos(lat2Rad) * 
+            Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
 
-        function toRad(deg) {
-            return deg * Math.PI / 180;
-        }
+function toRad(deg) {
+    return deg * (Math.PI/180);
+}
+function checkNearbyCrimes(currentPos) {
+  if (!dangerPointsData || dangerPointsData.length === 0) return;
+  
+  dangerPointsData.forEach(dp => {
+    // Ensure coordinates are numbers.
+    const dpLat = parseFloat(dp.lat);
+    const dpLng = parseFloat(dp.lng);
+    const distance = haversine(currentPos.lat(), currentPos.lng(), dpLat, dpLng);
+    const dpKey = `${dpLat}_${dpLng}`;
+    
+    console.log(`Distance to ${dp.name}: ${distance.toFixed(2)} km`);
+    
+    // Only trigger if distance is within 2 km and not nearly zero (to avoid false alerts at start)
+    if (distance <= 2 && distance > 0.1) {
+      if (!notifiedCrimes.has(dpKey)) {
+        notifiedCrimes.add(dpKey);
+        showNotification(`Safety Alert: ${dp.name} reported near ${dp.area}. Distance: ${distance.toFixed(2)} km.`);
+        console.log(`Alert triggered for ${dp.name}`);
+      }
+    } else {
+      // If outside range, remove from alerted set.
+      if (notifiedCrimes.has(dpKey)) {
+        notifiedCrimes.delete(dpKey);
+        console.log(`Removed ${dp.name} from notified list (distance: ${distance.toFixed(2)} km)`);
+      }
+    }
+  });
+}
 
-        function checkNearbyCrimes(currentPos) {
-            if (!dangerPointsData || dangerPointsData.length === 0) return;
-            
-            dangerPointsData.forEach(dp => {
-                const distance = haversine(
-                    currentPos.lat(), 
-                    currentPos.lng(), 
-                    dp.lat, 
-                    dp.lng
-                );
-                
-                if (distance <= 2) { // Within 2km radius
-                    const dpKey = `${dp.lat}_${dp.lng}`;
-                    if (!notifiedCrimes.has(dpKey)) {
-                        notifiedCrimes.add(dpKey);
-                        showNotification(`Safety Alert: ${dp.name} reported near ${dp.area || 'your location'}.`);
-                    }
-                }
-            });
-        }
 
-        function showNotification(message) {
-            document.getElementById("alertSound").play();
-            const notif = document.getElementById("notification");
-            notif.innerText = message;
-            notif.style.display = "block";
-            
-            setTimeout(() => {
-                notif.style.display = "none";
-            }, 5000);
-        }
+function showNotification(message) {
+  const alertSound = document.getElementById("alertSound");
+  if (alertSound) {
+    alertSound.currentTime = 0; // Reset playback
+    alertSound.play().catch(err => console.log("Sound playback error:", err));
+  }
+  const notif = document.getElementById("notification");
+  notif.innerHTML = message;
+  notif.style.display = "block";
+  setTimeout(() => {
+    notif.style.display = "none";
+  }, 5000);
+}
+
+
 
         function simulateMovement() {
             if (simulationInterval) return;

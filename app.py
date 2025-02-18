@@ -24,8 +24,14 @@ HARDCODED_INCIDENTS = [
     {"name": "Street Fight", "area": "Rawalpindi Committee Chowk", "severity": 2, "lat": 33.6124, "lng": 73.0728},
     {"name": "Mugging", "area": "Rawalpindi Banni", "severity": 2, "lat": 33.5970, "lng": 73.0417},
     {"name": "Flooding", "area": "Murree Road, Rawalpindi", "severity": 4, "lat": 33.6312, "lng": 73.0657},
-    {"name": "Accident", "area": "F-10, Islamabad", "severity": 2, "lat": 33.7047, "lng": 73.0456}
+    #{"name": "Accident", "area": "F-10, Islamabad", "severity": 2, "lat": 33.7047, "lng": 73.0456},
+   # {"name": "Demo Incident 2", "area": "Demo Zone 1", "severity": 3, "lat": 33.7000, "lng": 73.0500},
+    {"name": "Demo Incident 2", "area": "Demo Zone 2", "severity": 2, "lat": 33.7200, "lng": 73.0600},
+   {"name": "Demo Incident 1", "area": "Demo Zone 2", "severity": 2, "lat": 33.7300, "lng": 73.0650}, 
+    
+
 ]
+
 
 try:
     safety_calculator = RouteSafetyCalculator(gmaps, csv_file_path)
@@ -174,6 +180,11 @@ def get_route_data():
         for dp in danger_points:
             key = f"{dp['lat']}_{dp['lng']}"
             unique_danger_points[key] = dp
+        for incident in HARDCODED_INCIDENTS:
+            key = f"{incident['lat']}_{incident['lng']}"
+            if "danger_index" not in incident:
+                incident["danger_index"] = incident["severity"]
+            unique_danger_points[key] = incident
 
         # Determine the safest route
         safest_route_index = max(range(len(routes)), key=lambda i: routes[i]["safety_index"])
