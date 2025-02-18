@@ -1,441 +1,456 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>SafeRoute - Dynamic Destination</title>
-  <!-- Google Maps API with your API key -->
-  <script src="https://maps.googleapis.com/maps/api/js?key={{ api_key }}&callback=initMap" async defer></script>
-  <style>
-    body { margin:0; padding:0; font-family: Arial, sans-serif; background:#f9f9f9; }
-    #main-container { max-width:1200px; margin:20px auto; padding:20px; }
-    #map {
-      width:100%; height:500px;
-      border-radius:8px; box-shadow:0 4px 10px rgba(0,0,0,0.1);
-    }
-    #routes-container { margin-top:20px; }
-    .route-card {
-      background:#fff; border-radius:8px; padding:15px;
-      box-shadow:0 2px 6px rgba(0,0,0,0.1); margin-bottom:10px;
-      border-left:5px solid transparent; cursor:pointer; transition:0.2s;
-    }
-    .route-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      border-left:5px solid #4CAF50;
-    }
-    .route-card.safest { background:#E8F5E9; border-left:5px solid #4CAF50; }
-    #nav-info { margin-top:10px; background:#eee; padding:10px; border-radius:6px; min-height:50px; }
-    .btn {
-      background:#388e3c; color:#fff; padding:12px 20px;
-      border:none; border-radius:5px; cursor:pointer; font-size:1em; font-weight:bold;
-      margin-right:8px; margin-top:10px;
-    }
-    .btn:hover { background:#2e7d32; transform:translateY(-2px); }
-    /* Enhanced notification (toast) styling with danger look */
-    #notification {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: linear-gradient(45deg, #ff4e50, #f9d423);
-      color: #fff;
-      padding: 15px 25px;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      z-index: 1000;
-      display: none;
-      font-size: 1.2em;
-      font-weight: bold;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeRouteXplorer</title>
+    <style>
+        /* General Styling */
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9; /* Subtle gray background */
+            color: #333;
+        }
+    
+        /* Navbar */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(90deg, #81c784, #a5d6a7); /* Light green gradient */
+            color: white;
+            padding: 15px 0;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        nav .logo {
+    font-size: 2em;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 10px;
+    letter-spacing: 2px;
+    text-transform: none; /* Exact casing */
+}
+    
+        nav .nav-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+    
+        .nav-buttons .btn {
+            background-color: white;
+            color: #388e3c; /* Green button text */
+            padding: 12px 25px;
+            border: none;
+            border-radius: 30px; /* Rounded buttons */
+            font-size: 1em;
+            font-weight: bold;
+            text-transform: capitalize;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+    
+        .nav-buttons .btn:hover {
+            background: #66bb6a; /* Green hover effect */
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
+        }
+    
+        /* Safest Route Section */
+        .safest-route-display {
+            margin: 120px auto 20px; /* Space for the navbar */
+            padding: 20px;
+            background: linear-gradient(135deg, #e8f5e9, #f1f8e9); /* Light green gradient */
+            border-radius: 10px;
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 800px;
+        }
+    
+        .safest-route-display h3 {
+            color: #388e3c; /* Dark green text */
+            font-weight: bold;
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+    
+        .safest-route-display p {
+            color: #555;
+            font-size: 1.1em;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+    
+        /* Map Container */
+        #map {
+            height: 500px;
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            margin-top: 30px; /* Space below safest route display */
+        }
+    
+        /* General Button Styling (Primary Button) */
+        .btn-primary {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 12px 20px;
+            font-size: 1em;
+            font-weight: bold;
+            color: white;
+            background: #388e3c; /* Solid green */
+            border: none;
+            border-radius: 5px;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+    
+        .btn-primary:hover {
+            background: #2e7d32; /* Darker green on hover */
+            transform: translateY(-2px);
+        }
+       /* Routes Container */
+       #routes-container {
+            margin: 20px auto;
+            padding: 20px;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Route Card */
+        .route-info {
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 5px solid transparent; /* Default border */
+        }
+
+        .route-info:hover {
+            transform: translateY(-3px);
+            box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.15);
+            border-left: 5px solid #4CAF50; /* Highlight border on hover */
+        }
+
+        .safest-route {
+            border-left: 5px solid #4CAF50; /* Highlight the safest route */
+            background-color: #e8f5e9; /* Subtle green background */
+        }
+
+        .route-info strong {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #388e3c; /* Green text for route titles */
+        }
+
+        .route-info p {
+            margin: 5px 0;
+            color: #555;
+            line-height: 1.5;
+        }
+
+        /* Input for start and enf locations*/
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input:focus {
+            border-color: #4CAF50;
+            outline: none;
+        }
+
+        #location-form .btn-primary {
+            width: 100%;
+            margin-top: 10px;
+            padding: 14px;
+        }
+    </style>
+    
+    
+
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ api_key }}&callback=initMap" async defer></script>
 </head>
 <body>
-  <div id="main-container">
-    <!-- Destination input -->
-    <div>
-      <label for="dest-input"><strong>Destination:</strong></label>
-      <input id="dest-input" type="text" value="Islamabad" style="padding:6px; margin-right:10px;">
-      <button id="fetch-routes-btn" class="btn">Find Routes From My Location</button>
+    <nav>
+        <div class="logo">SafeRouteXplorer</div>
+        <div class="nav-buttons">
+            <button class="btn">Enable Real-Time Safety Alerts</button>
+            <button class="btn">Search Any Location</button>
+            <button class="btn">Your Timeline</button>
+            <button class="btn">Set Start & End Location</button>
+        </div>
+    </nav>
+    
+
+    <div class="safest-route-display">
+        <h3>Safest Route from Rawalpindi to Islamabad</h3>
     </div>
 
-    <button id="start-nav" class="btn" style="display:none;">Start Navigation</button>
-    <button id="stop-nav" class="btn" style="display:none;">Stop Navigation</button>
-    <!-- Button to simulate movement for demonstration -->
-    <button id="simulate-movement" class="btn" style="display:inline-block;">Simulate Movement</button>
-
-    <div id="nav-info">No navigation active.</div>
-    <div id="map" style="margin-top:20px;"></div>
+    <div id="map"></div>
     <div id="routes-container"></div>
-  </div>
+    <div id="safety-info"></div>
 
-  <!-- Notification container -->
-  <div id="notification"></div>
-  <!-- Audio element for alert sound -->
-  <audio id="alertSound">
-    <source src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" type="audio/ogg">
-    <source src="https://actions.google.com/sounds/v1/alarms/alarm_clock.mp3" type="audio/mpeg">
-  </audio>
+    <script>
+        let map, directionsService, directionsRenderers = [];
 
-  <script>
-    let map;
-    let allRoutes = [];
-    let routePolylines = [];
-    let chosenRouteIndex = null;
-    let userMarker = null;
-    let watchId = null;
-    let navStartTime = null;
-    let directionsService;
-    let currentDestination = "Islamabad"; // read from input
-
-    // Global danger points received from backend
-    let dangerPointsData = [];
-    // Set to track incidents already notified (each danger point alerts only once)
-    let notifiedCrimes = new Set();
-
-    // For simulation demo: preset simulated path (adjust these points as needed)
-    const simulatedPath = [
-      { lat: 33.6844, lng: 73.0479 },
-      { lat: 33.6900, lng: 73.0485 },
-      { lat: 33.6950, lng: 73.0490 },
-      { lat: 33.7000, lng: 73.0500 }, // near Demo Incident 1 (backend)
-      { lat: 33.7050, lng: 73.0520 },
-      { lat: 33.7100, lng: 73.0530 },
-      { lat: 33.7150, lng: 73.0550 },
-      { lat: 33.7200, lng: 73.0600 }  // near Demo Incident 2 (backend)
-    ];
-    let simulationIndex = 0;
-    let simulationInterval = null;
-    // Variables to track cumulative distance for generic demo incidents.
-    let simulationCumulativeDistance = 0; // in km
-    let simulationLastPos = null;
-    let nextDemoThreshold = 3; // every 3 km
-
-    function initMap() {
-      map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat: 33.6844, lng: 73.0479 },
-        zoom: 12
-      });
-      directionsService = new google.maps.DirectionsService();
-
-      document.getElementById("fetch-routes-btn").addEventListener("click", fetchRoutesFromUserLoc);
-      document.getElementById("start-nav").addEventListener("click", startNavigation);
-      document.getElementById("stop-nav").addEventListener("click", stopNavigation);
-      document.getElementById("simulate-movement").addEventListener("click", simulateMovement);
-    }
-
-    function fetchRoutesFromUserLoc() {
-      const destInput = document.getElementById("dest-input");
-      currentDestination = destInput.value.trim() || "Islamabad";
-
-      if (!navigator.geolocation) {
-        alert("Geolocation not supported by this browser.");
-        return;
-      }
-      navigator.geolocation.getCurrentPosition(
-        pos => {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
-          const url = `/get_route_data?origin_lat=${lat}&origin_lng=${lng}&destination=${encodeURIComponent(currentDestination)}`;
-          fetch(url)
-            .then(resp => resp.json())
-            .then(data => {
-              if (data.error) {
-                alert(data.error);
-                return;
-              }
-              // Save danger points (including forced demo incidents from backend)
-              dangerPointsData = data.danger_points;
-
-              allRoutes = data.routes;
-              clearPolylines();
-
-              const routesContainer = document.getElementById("routes-container");
-              routesContainer.innerHTML = "";
-
-              allRoutes.forEach((routeObj, i) => {
-                const routePath = routeObj.path.map(p => ({ lat: p.lat, lng: p.lng }));
-                let color = routeObj.is_safest ? "#4CAF50" : "#FF0000";
-                const poly = new google.maps.Polyline({
-                  path: routePath,
-                  strokeColor: color,
-                  strokeWeight: routeObj.is_safest ? 6 : 4,
-                  strokeOpacity: 0.8,
-                  map: map
-                });
-                routePolylines.push(poly);
-
-                // Build route card
-                const card = document.createElement("div");
-                card.className = "route-card";
-                if (routeObj.is_safest) card.classList.add("safest");
-                card.innerHTML = `
-                  <h4>Route ${i+1}</h4>
-                  <p><strong>Distance:</strong> ${routeObj.distance}</p>
-                  <p><strong>Duration:</strong> ${routeObj.duration}</p>
-                  <p><strong>Danger Index:</strong> ${routeObj.danger_index}</p>
-                  ${routeObj.is_safest ? "<em>(Safest Route)</em>" : ""}
-                `;
-                card.onclick = () => selectRoute(i);
-                routesContainer.appendChild(card);
-              });
-
-              // Place markers for danger points
-              dangerPointsData.forEach(dp => {
-                new google.maps.Marker({
-                  position: { lat: dp.lat, lng: dp.lng },
-                  map: map,
-                  title: `${dp.name} (Severity: ${dp.danger_index})`,
-                  icon: {
-                    path: google.maps.SymbolPath.CIRCLE,
-                    fillColor: getDangerColor(dp.danger_index),
-                    fillOpacity: 0.8,
-                    strokeWeight: 1,
-                    scale: 5
-                  }
-                });
-              });
-
-              // Fit map bounds to include route and danger points
-              const bounds = new google.maps.LatLngBounds();
-              routePolylines.forEach(poly => {
-                poly.getPath().forEach(ll => bounds.extend(ll));
-              });
-              dangerPointsData.forEach(dp => bounds.extend({ lat: dp.lat, lng: dp.lng }));
-              map.fitBounds(bounds);
-
-              // Pick safest route by default
-              chosenRouteIndex = allRoutes.findIndex(r => r.is_safest);
-              if (chosenRouteIndex < 0) chosenRouteIndex = 0;
-
-              document.getElementById("start-nav").style.display = "inline-block";
-              document.getElementById("stop-nav").style.display = "none";
-              document.getElementById("nav-info").innerText = `Routes loaded for destination: ${data.destination}. Pick a route, then Start Navigation.`;
-            })
-            .catch(err => {
-              console.error("Error fetching route data:", err);
-              alert("Failed to fetch route data from server.");
+        function initMap() {
+            // Initialize the map
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: 33.6844, lng: 73.0479 }, // Rawalpindi as default center
+                zoom: 12,
             });
-        },
-        err => {
-          console.error("geolocation error:", err);
-          alert("Unable to get your location.");
-        },
-        { enableHighAccuracy: true }
-      );
-    }
 
-    function clearPolylines() {
-      routePolylines.forEach(poly => poly.setMap(null));
-      routePolylines = [];
-    }
+            // Initialize DirectionsService
+            directionsService = new google.maps.DirectionsService();
 
-    function selectRoute(index) {
-      chosenRouteIndex = index;
-      allRoutes.forEach((r, i) => {
-        let color = (i === chosenRouteIndex) ? "#4CAF50" : "#FF0000";
-        routePolylines[i].setOptions({
-          strokeColor: color,
-          strokeWeight: (i === chosenRouteIndex) ? 6 : 4
-        });
-      });
-    }
+            // Initialize modal functionality
+            initializeModal();
 
-    function getDangerColor(sev) {
-      if (sev >= 4) return "red";
-      if (sev === 3) return "orange";
-      if (sev === 2) return "yellow";
-      return "green";
-    }
-
-    function startNavigation() {
-      if (!navigator.geolocation) {
-        alert("Geolocation not supported by your browser.");
-        return;
-      }
-      navStartTime = Date.now();
-      document.getElementById("nav-info").innerText = `Navigation started on Route #${chosenRouteIndex + 1} to ${currentDestination}.`;
-
-      // Hide other routes
-      routePolylines.forEach((poly, i) => {
-        if (i !== chosenRouteIndex) poly.setMap(null);
-        else {
-          poly.setOptions({
-            strokeColor: "#4CAF50",
-            strokeWeight: 6,
-            strokeOpacity: 1.0
-          });
+            // Fetch and display the routes
+            fetchRoutes();
         }
-      });
 
-      document.getElementById("start-nav").style.display = "none";
-      document.getElementById("stop-nav").style.display = "inline-block";
+        function initializeModal() {
+            const modal = document.getElementById("location-modal");
+            const locationBtn = document.querySelector('.nav-buttons .btn:last-child');
+            const closeBtn = document.querySelector(".close-btn");
+            const locationForm = document.getElementById("location-form");
 
-      watchId = navigator.geolocation.watchPosition(
-        pos => {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
-          const newPos = new google.maps.LatLng(lat, lng);
+            if (locationBtn && modal && closeBtn && locationForm) {
+                // Show modal when the button is clicked
+                locationBtn.addEventListener("click", () => {
+                    modal.style.display = "block";
+                });
 
-          if (!userMarker) {
-            userMarker = new google.maps.Marker({
-              position: newPos,
-              map: map,
-              icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-              title: "You"
+                // Close modal when clicking the close button
+                closeBtn.addEventListener("click", () => {
+                    modal.style.display = "none";
+                });
+
+                // Close modal when clicking outside
+                window.addEventListener("click", (event) => {
+                    if (event.target === modal) {
+                        modal.style.display = "none";
+                    }
+                });
+
+                // Handle form submission
+                locationForm.addEventListener("submit", (e) => {
+                    e.preventDefault();
+                    const startLocation = document.getElementById("start-location").value;
+                    const endLocation = document.getElementById("end-location").value;
+                    
+                    // Update the route display title
+                    document.querySelector(".safest-route-display h3").textContent = 
+                        `Safest Route from ${startLocation} to ${endLocation}`;
+                    
+                    // Call fetchRoutes with new locations
+                    fetchRoutes(startLocation, endLocation);
+                    
+                    // Close the modal
+                    modal.style.display = "none";
+                });
+            }
+        }
+
+        function fetchRoutes(startLocation = "Rawalpindi", endLocation = "Islamabad") {
+            fetch('/get_route_data')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById("safety-info").innerText = "No routes found.";
+                        return;
+                    }
+
+                    // Clear existing routes
+                    clearRoutes();
+
+                    // Find the safest route
+                    const safestRouteIndex = data.routes.reduce((minIndex, route, currentIndex, arr) => 
+                        route.safety_index < arr[minIndex].safety_index ? currentIndex : minIndex
+                    , 0);
+
+                    // Create request for directions service
+                    const request = {
+                        origin: startLocation,
+                        destination: endLocation,
+                        travelMode: google.maps.TravelMode.DRIVING,
+                        provideRouteAlternatives: true
+                    };
+
+                    // Get directions and display them
+                    directionsService.route(request, function(response, status) {
+                        if (status === 'OK') {
+                            const routesContainer = document.getElementById('routes-container');
+                            routesContainer.innerHTML = '';
+
+                            response.routes.forEach((route, index) => {
+                                const renderer = new google.maps.DirectionsRenderer({
+                                    map: map,
+                                    directions: response,
+                                    routeIndex: index,
+                                    polylineOptions: {
+                                        strokeColor: index === safestRouteIndex ? '#4CAF50' : '#FF0000',
+                                        strokeWeight: index === safestRouteIndex ? 6 : 4,
+                                        strokeOpacity: index === safestRouteIndex ? 1.0 : 0.7
+                                    },
+                                    suppressMarkers: true
+                                });
+                                directionsRenderers.push(renderer);
+
+                                const routeInfo = document.createElement('div');
+                                routeInfo.className = `route-info ${index === safestRouteIndex ? 'safest-route' : ''}`;
+                                routeInfo.innerHTML = ` 
+                                    <strong>Route ${index + 1}</strong><br>
+                                    Distance: ${route.legs[0].distance.text}<br>
+                                    Duration: ${route.legs[0].duration.text}<br>
+                                    Danger Index: ${data.routes[index].safety_index.toFixed(2)}
+                                    ${index === safestRouteIndex ? '<br><strong>(Safest Route)</strong>' : ''}`;
+                                routesContainer.appendChild(routeInfo);
+                            });
+
+                            // Add markers for danger points
+                            data.danger_points.forEach(point => {
+                                new google.maps.Marker({
+                                    position: { lat: point.lat, lng: point.lng },
+                                    map: map,
+                                    title: `Danger Index: ${point.danger_index}`,
+                                    icon: {
+                                        path: google.maps.SymbolPath.CIRCLE,
+                                        fillColor: getColorForDangerIndex(point.danger_index),
+                                        fillOpacity: 0.8,
+                                        strokeWeight: 1,
+                                        scale: 6
+                                    }
+                                });
+                            });
+
+                            // Fit bounds to include all routes and danger points
+                            const bounds = new google.maps.LatLngBounds();
+                            response.routes.forEach(route => {
+                                route.legs.forEach(leg => {
+                                    leg.steps.forEach(step => {
+                                        step.path.forEach(point => {
+                                            bounds.extend(point);
+                                        });
+                                    });
+                                });
+                            });
+
+                            data.danger_points.forEach(point => {
+                                bounds.extend(new google.maps.LatLng(point.lat, point.lng));
+                            });
+
+                            map.fitBounds(bounds);
+                        } else {
+                            console.error('Directions request failed due to ' + status);
+                            document.getElementById("safety-info").innerText = "Error fetching route data.";
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error("Error fetching route data:", error);
+                    document.getElementById("safety-info").innerText = "Error fetching route data.";
+                });
+        }
+
+        function clearRoutes() {
+            directionsRenderers.forEach(renderer => {
+                renderer.setMap(null);
             });
-          } else {
-            userMarker.setPosition(newPos);
-          }
-          map.setCenter(newPos);
-          updateNavInfo(newPos);
-          // Check for backend danger points near current position.
-          checkNearbyCrimes(newPos);
-        },
-        err => {
-          console.error("watchPosition error:", err);
-          alert("Cannot track your position in real-time.");
-        },
-        { enableHighAccuracy: true }
-      );
-    }
-
-    function stopNavigation() {
-      if (watchId !== null) {
-        navigator.geolocation.clearWatch(watchId);
-        watchId = null;
-      }
-      if (userMarker) {
-        userMarker.setMap(null);
-        userMarker = null;
-      }
-      navStartTime = null;
-      document.getElementById("nav-info").innerText = "Navigation stopped.";
-      document.getElementById("start-nav").style.display = "inline-block";
-      document.getElementById("stop-nav").style.display = "none";
-    }
-
-    function updateNavInfo(currentPos) {
-      if (!navStartTime) return;
-      const request = {
-        origin: currentPos,
-        destination: currentDestination,
-        travelMode: google.maps.TravelMode.DRIVING
-      };
-      directionsService.route(request, (resp, status) => {
-        if (status === "OK") {
-          const leg = resp.routes[0].legs[0];
-          const dist = leg.distance.text;
-          const dur = leg.duration.text;
-
-          const elapsedMs = Date.now() - navStartTime;
-          let sec = Math.floor(elapsedMs / 1000);
-          const hh = Math.floor(sec / 3600);
-          sec %= 3600;
-          const mm = Math.floor(sec / 60);
-          const ss = sec % 60;
-          let elapsedStr = `${hh > 0 ? hh + 'h ' : ''}${mm > 0 ? mm + 'm ' : ''}${ss}s`;
-
-          document.getElementById("nav-info").innerHTML = `
-            <strong>Distance to ${currentDestination}:</strong> ${dist}<br>
-            <strong>Estimated Time:</strong> ${dur}<br>
-            <strong>Elapsed:</strong> ${elapsedStr}
-          `;
+            directionsRenderers = [];
         }
-      });
-    }
 
-    // Haversine formula helper functions (in km)
-    function toRad(deg) {
-      return deg * Math.PI / 180;
-    }
-    function haversine(lat1, lng1, lat2, lng2) {
-      const R = 6371; // km
-      const dLat = toRad(lat2 - lat1);
-      const dLng = toRad(lng2 - lng1);
-      const a = Math.sin(dLat / 2) ** 2 +
-                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-                Math.sin(dLng / 2) ** 2;
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c;
-    }
-
-    // Check if any backend danger point is within 2km of the current position.
-    function checkNearbyCrimes(currentPos) {
-      if (!dangerPointsData || dangerPointsData.length === 0) return;
-      dangerPointsData.forEach(dp => {
-        const distance = haversine(currentPos.lat(), currentPos.lng(), dp.lat, dp.lng);
-        if (distance <= 2) {
-          const dpKey = dp.lat + "_" + dp.lng;
-          if (!notifiedCrimes.has(dpKey)) {
-            notifiedCrimes.add(dpKey);
-            showNotification(`Crime Alert: ${dp.name} reported near ${dp.area}.`);
-          }
+        function getColorForDangerIndex(dangerIndex) {
+            if (dangerIndex === 3) return "red";
+            if (dangerIndex === 2) return "orange";
+            return "yellow";
         }
-      });
-    }
+    </script>
 
-    // Display an enhanced notification (toast) with sound.
-    function showNotification(message) {
-      // Play sound
-      document.getElementById("alertSound").play();
-      // Update notification text and show it.
-      const notif = document.getElementById("notification");
-      notif.innerText = message;
-      notif.style.display = "block";
-      // Hide after 5 seconds.
-      setTimeout(() => {
-        notif.style.display = "none";
-      }, 5000);
-    }
-
-    // For demonstration: Simulate user movement along a preset path.
-    function simulateMovement() {
-      if (simulationInterval) return; // prevent multiple clicks
-      simulationIndex = 0;
-      // Reset simulation distance tracking for generic demo incidents.
-      simulationCumulativeDistance = 0;
-      simulationLastPos = null;
-      nextDemoThreshold = 3;
-      // Clear previous notified crimes (for demo clarity).
-      notifiedCrimes.clear();
-
-      simulationInterval = setInterval(() => {
-        if (simulationIndex >= simulatedPath.length) {
-          clearInterval(simulationInterval);
-          simulationInterval = null;
-          return;
-        }
-        const pos = simulatedPath[simulationIndex];
-        const newPos = new google.maps.LatLng(pos.lat, pos.lng);
-        if (!userMarker) {
-          userMarker = new google.maps.Marker({
-            position: newPos,
-            map: map,
-            icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-            title: "You (Simulated)"
-          });
-        } else {
-          userMarker.setPosition(newPos);
-        }
-        map.setCenter(newPos);
-        updateNavInfo(newPos);
-        // Check for backend danger points near current position.
-        checkNearbyCrimes(newPos);
-
-        // --- Generic demo incident alert every 3 km ---
-        if (!simulationLastPos) {
-          simulationLastPos = pos;
-        } else {
-          let dist = haversine(simulationLastPos.lat, simulationLastPos.lng, pos.lat, pos.lng);
-          simulationCumulativeDistance += dist;
-          simulationLastPos = pos;
-          if (simulationCumulativeDistance >= nextDemoThreshold) {
-            showNotification(`Demo Incident: Crime reported at approximately ${nextDemoThreshold} km from start.`);
-            nextDemoThreshold += 3;
-          }
-        }
-        simulationIndex++;
-      }, 2000); // update every 2 seconds
-    }
-  </script>
+    <div id="location-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Set Route Locations</h2>
+            <form id="location-form">
+                <div class="input-group">
+                    <label for="start-location">Start Location:</label>
+                    <input type="text" id="start-location" name="start-location" required placeholder="Enter starting point">
+                </div>
+                <div class="input-group">
+                    <label for="end-location">End Location:</label>
+                    <input type="text" id="end-location" name="end-location" required placeholder="Enter destination">
+                </div>
+                <button type="submit" class="btn-primary">Find Safe Routes</button>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
