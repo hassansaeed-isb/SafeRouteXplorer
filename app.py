@@ -82,7 +82,7 @@ def index():
                 return render_template("index.html", api_key=gmaps_api_key)
         except Exception as e:
             print(f"API key validation error: {str(e)}")
-    return render_template("offline_vector_map.html")
+    return render_template("offline_vector_map.html", incident_data=HARDCODED_INCIDENTS)
 
 def get_offline_route_data():
     return {

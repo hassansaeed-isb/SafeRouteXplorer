@@ -4,48 +4,179 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Offline Map - Pakistan</title>
-
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-
     <style>
         #map {
             height: 90vh;
             width: 100%;
         }
+        /* Custom tooltip style */
+        .leaflet-tooltip {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #666;
+            border-radius: 4px;
+            padding: 4px 8px;
+        }
+        /* Custom popup style */
+        .leaflet-popup-content {
+            margin: 10px;
+        }
+        .incident-title {
+            font-weight: bold;
+            color: #d32f2f;
+            margin-bottom: 5px;
+        }
+        .incident-details {
+            color: #666;
+            font-size: 0.9em;
+        }
     </style>
 </head>
 <body>
-
     <h2>Offline Map - Pakistan</h2>
     <div id="map"></div>
-
     <script>
         var map = L.map('map').setView([30.3753, 69.3451], 6);  // Centered in Pakistan
-
-        // Offline Caching Fix: Use standard Leaflet TileLayer with browser caching
-        var tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '© OpenStreetMap contributors'
-        });
+        }).addTo(map);
 
-        tileLayer.addTo(map);
+        // Hardcoded incidents with detailed descriptions
+        const hardcodedIncidents = [
+            {
+                name: "Car Accident",
+                area: "F-8, Islamabad",
+                severity: 3,
+                lat: 33.6844,
+                lng: 73.0479,
+                description: "Multiple vehicle collision on main road"
+            },
+            {
+                name: "Robbery",
+                area: "G-9, Islamabad",
+                severity: 2,
+                lat: 33.6846,
+                lng: 73.0586,
+                description: "Armed robbery at local store"
+            },
+            {
+                name: "Traffic Jam",
+                area: "Rawalpindi Saddar",
+                severity: 1,
+                lat: 33.5968,
+                lng: 73.0476,
+                description: "Heavy traffic congestion due to road work"
+            },
+            {
+                name: "Street Fight",
+                area: "Rawalpindi Committee Chowk",
+                severity: 2,
+                lat: 33.6124,
+                lng: 73.0728,
+                description: "Public altercation between groups"
+            },
+            {
+                name: "Mugging",
+                area: "Rawalpindi Banni",
+                severity: 2,
+                lat: 33.5970,
+                lng: 73.0417,
+                description: "Phone snatching incident reported"
+            },
+            {
+                name: "Flooding",
+                area: "Murree Road, Rawalpindi",
+                severity: 4,
+                lat: 33.6312,
+                lng: 73.0657,
+                description: "Road flooded due to heavy rain"
+            }
+        ];
 
-        // Load danger points from Flask API
-        fetch('/get_route_data')
-            .then(response => response.json())
-            .then(data => {
-                data.danger_points.forEach(point => {
-                    L.marker([point.lat, point.lng])
-                        .addTo(map)
-                        .bindPopup(`<b>${point.name}</b><br>Severity: ${point.severity}`);
+        function getSeverityColor(severity) {
+            switch(severity) {
+                case 4: return '#d32f2f'; // Critical - dark red
+                case 3: return '#f44336'; // High - red
+                case 2: return '#ff9800'; // Medium - orange
+                case 1: return '#ffc107'; // Low - amber
+                default: return '#757575'; // Unknown - grey
+            }
+        }
+
+        function addPointToMap(point) {
+            console.log("Adding point:", point);
+            if (point.lat && point.lng) {
+                // Create marker with custom color based on severity
+                const marker = L.circleMarker([point.lat, point.lng], {
+                    radius: 8,
+                    fillColor: getSeverityColor(point.severity),
+                    color: '#fff',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
                 });
-            })
-            .catch(error => console.error("Error loading danger points:", error));
-    </script>
 
+                // Add tooltip (shows on hover)
+                marker.bindTooltip(point.description || `${point.name} in ${point.area}`, {
+                    permanent: false,
+                    direction: 'top'
+                });
+
+                // Add popup (shows on click)
+                marker.bindPopup(`
+                    <div class="incident-title">${point.name}</div>
+                    <div class="incident-details">
+                        <strong>Location:</strong> ${point.area}<br>
+                        <strong>Severity:</strong> ${
+                            point.severity === 4 ? 'Critical' :
+                            point.severity === 3 ? 'High' :
+                            point.severity === 2 ? 'Medium' :
+                            point.severity === 1 ? 'Low' : 'Unknown'
+                        }<br>
+                        <strong>Details:</strong> ${point.description || 'No additional details available'}
+                    </div>
+                `);
+
+                marker.addTo(map);
+                console.log("Marker added at:", point.lat, point.lng);
+            } else {
+                console.error("Invalid point coordinates:", point);
+            }
+        }
+
+        // Try to load points from API first
+        console.log("Fetching points from API...");
+        fetch('/get_route_data')
+            .then(response => {
+                console.log("API Response:", response);
+                return response.json();
+            })
+            .then(data => {
+                console.log("Received data:", data);
+                if (data && data.danger_points && data.danger_points.length > 0) {
+                    console.log("Adding points from API...");
+                    data.danger_points.forEach(point => {
+                        // Add description if missing
+                        if (!point.description) {
+                            point.description = `${point.name} reported in ${point.area}`;
+                        }
+                        addPointToMap(point);
+                    });
+                } else {
+                    console.log("No points from API, using hardcoded data...");
+                    hardcodedIncidents.forEach(point => addPointToMap(point));
+                }
+            })
+            .catch(error => {
+                console.error("Error loading points from API:", error);
+                console.log("Falling back to hardcoded incidents...");
+                hardcodedIncidents.forEach(point => addPointToMap(point));
+            });
+    </script>
 </body>
 </html>
