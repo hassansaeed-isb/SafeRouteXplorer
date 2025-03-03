@@ -2,7 +2,7 @@ import os
 import googlemaps
 import math
 import re
-import csv
+# import csv
 import logging
 from enum import Enum
 from typing import List, Dict, Tuple, Optional
@@ -45,7 +45,7 @@ class RouteSafetyCalculator:
     MAX_CACHE_SIZE = 1000   # Maximum size for LRU cache
     CATEGORY_RADIUS_KM = 10.0  # Radius for category-based calculations
 
-    def __init__(self, gmaps_client: googlemaps.Client, csv_file_path: str):
+    def __init__(self, gmaps_client: googlemaps.Client, csv_file_path: str = None):
         """
         Initialize the Route Safety Calculator
         
@@ -61,8 +61,8 @@ class RouteSafetyCalculator:
         self.distance_factor = 1.0  # Distance adjustment factor
         
         # Validate CSV file exists
-        if not os.path.exists(csv_file_path):
-            raise FileNotFoundError(f"CSV file not found: {csv_file_path}")
+        # if not os.path.exists(csv_file_path):
+        #     raise FileNotFoundError(f"CSV file not found: {csv_file_path}")
             
         self.incident_locations = self._load_incident_data()
         # logger.info(f"Loaded {len(self.incident_locations)} incidents from data")
@@ -88,74 +88,76 @@ class RouteSafetyCalculator:
         ]
         incidents.extend(hardcoded_incidents)
         
-        try:
-            with open(self.csv_file_path, mode='r', encoding='utf-8') as file:
-                reader = csv.DictReader(file)
-                for row in reader:
-                    incident = self._parse_incident_row(row)
-                    if incident:
-                        incidents.append(incident)
-                        
-        except csv.Error as e:
-            logger.error(f"Error reading CSV file: {str(e)}")
-            raise ValueError(f"Invalid CSV data: {str(e)}")
+        # CSV parsing code - commented out
+        # try:
+        #     with open(self.csv_file_path, mode='r', encoding='utf-8') as file:
+        #         reader = csv.DictReader(file)
+        #         for row in reader:
+        #             incident = self._parse_incident_row(row)
+        #             if incident:
+        #                 incidents.append(incident)
+        #                 
+        # except csv.Error as e:
+        #     logger.error(f"Error reading CSV file: {str(e)}")
+        #     raise ValueError(f"Invalid CSV data: {str(e)}")
             
         if not incidents:
             raise ValueError("No valid incidents found in data")
             
         return incidents
 
-    def _parse_incident_row(self, row: Dict) -> Optional[Incident]:
-        """
-        Parse a single incident row from CSV data with category detection
-        
-        Args:
-            row: Dictionary containing row data
-            
-        Returns:
-            Optional[Incident]: Parsed incident or None if invalid
-        """
-        try:
-            extracted_info = row.get('Extracted_Info', '')
-            
-            # Extract information using regex
-            area_match = re.search(r"Area: (.+?)(?:,|$)", extracted_info)
-            severity_match = re.search(r"Severity: (\w+)", extracted_info)
-            name_match = re.search(r"Name: (.+?)(?:,|$)", extracted_info)
-            category_match = re.search(r"Category: (\w+)", extracted_info)
-
-            if not area_match:
-                # logger.warning(f"Could not extract area from: {extracted_info}")
-                return None
-
-            area = area_match.group(1)
-            severity_text = severity_match.group(1).upper() if severity_match else "LOW"
-            name = name_match.group(1) if name_match else "Unnamed Incident"
-            
-            # Determine severity
-            try:
-                severity = Severity[severity_text]
-            except KeyError:
-                severity = Severity.LOW
-
-            # Determine category
-            category_text = category_match.group(1).upper() if category_match else "OTHER"
-            try:
-                category = LocationCategory[category_text]
-            except KeyError:
-                category = LocationCategory.OTHER
-
-            lat, lng = self._geocode_location(area)
-            
-            if lat == 0 and lng == 0:
-                # logger.warning(f"Could not geocode location: {area}")
-                return None
-
-            return Incident(name, area, severity, lat, lng, category)
-            
-        except Exception as e:
-            logger.error(f"Error parsing incident row: {str(e)}")
-            return None
+    # CSV-related method - commented out
+    # def _parse_incident_row(self, row: Dict) -> Optional[Incident]:
+    #     """
+    #     Parse a single incident row from CSV data with category detection
+    #     
+    #     Args:
+    #         row: Dictionary containing row data
+    #         
+    #     Returns:
+    #         Optional[Incident]: Parsed incident or None if invalid
+    #     """
+    #     try:
+    #         extracted_info = row.get('Extracted_Info', '')
+    #         
+    #         # Extract information using regex
+    #         area_match = re.search(r"Area: (.+?)(?:,|$)", extracted_info)
+    #         severity_match = re.search(r"Severity: (\w+)", extracted_info)
+    #         name_match = re.search(r"Name: (.+?)(?:,|$)", extracted_info)
+    #         category_match = re.search(r"Category: (\w+)", extracted_info)
+    #
+    #         if not area_match:
+    #             # logger.warning(f"Could not extract area from: {extracted_info}")
+    #             return None
+    #
+    #         area = area_match.group(1)
+    #         severity_text = severity_match.group(1).upper() if severity_match else "LOW"
+    #         name = name_match.group(1) if name_match else "Unnamed Incident"
+    #         
+    #         # Determine severity
+    #         try:
+    #             severity = Severity[severity_text]
+    #         except KeyError:
+    #             severity = Severity.LOW
+    #
+    #         # Determine category
+    #         category_text = category_match.group(1).upper() if category_match else "OTHER"
+    #         try:
+    #             category = LocationCategory[category_text]
+    #         except KeyError:
+    #             category = LocationCategory.OTHER
+    #
+    #         lat, lng = self._geocode_location(area)
+    #         
+    #         if lat == 0 and lng == 0:
+    #             # logger.warning(f"Could not geocode location: {area}")
+    #             return None
+    #
+    #         return Incident(name, area, severity, lat, lng, category)
+    #         
+    #     except Exception as e:
+    #         logger.error(f"Error parsing incident row: {str(e)}")
+    #         return None
 
     @lru_cache(maxsize=MAX_CACHE_SIZE)
     def _geocode_location(self, location_name: str) -> Tuple[float, float]:
