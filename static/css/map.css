@@ -1,0 +1,25 @@
+/* Map Container */
+#map {
+    height: 500px;
+    width: 100%;
+    max-width: 800px;
+    margin: 20px auto;
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Notification System */
+#notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(45deg, #ff4e50, #f9d423);
+    color: #fff;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    z-index: 1000;
+    display: none;
+    font-size: 1.2em;
+    font-weight: bold;
+}
