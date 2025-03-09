@@ -1,68 +1,559 @@
-/* General Styling */
-body {
-    font-family: 'Roboto', sans-serif;
+/* Enhanced main.css - Modernized UI for SafeRouteXplorer */
+
+/* Base styling and reset */
+* {
     margin: 0;
     padding: 0;
-    background-color: #f9f9f9;
+    box-sizing: border-box;
+    font-family: 'Poppins', 'Segoe UI', Roboto, sans-serif;
+  }
+  
+  body {
+    overflow: hidden;
     color: #333;
-}
-
-/* Safest Route Section */
-.safest-route-display {
-    margin: 120px auto 20px;
-    padding: 20px;
-    background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
-    border-radius: 10px;
-    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    max-width: 800px;
-}
-
-.safest-route-display h3 {
-    color: #388e3c;
-    font-weight: bold;
-    font-size: 1.8em;
-    margin-bottom: 10px;
-}
-
-/* Navigation Info */
-#nav-info {
-    margin: 20px auto;
-    max-width: 800px;
-    background: #eee;
-    padding: 10px;
-    border-radius: 6px;
-    min-height: 50px;
-}
-
-/* Routes Container */
-#routes-container {
-    margin: 20px auto;
-    padding: 20px;
-    max-width: 800px;
+    background-color: #f0f4f8;
+  }
+  
+  /* Fullscreen Map with improved aesthetics */
+  #map {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
+  }
+  
+  /* Redesigned Navigation Panel with glass morphism effect */
+  nav {
+    position: fixed;
+    right: 0;
+    top: 0;
+    height: 100vh;
+    width: 380px;
+    background: linear-gradient(135deg, rgba(16, 29, 97, 0.92), rgba(35, 93, 173, 0.92));
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px 25px;
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+  }
+  
+  nav .logo {
+    font-size: 2.4em;
+    font-weight: 800;
+    letter-spacing: 2px;
+    margin-bottom: 35px;
+    background: linear-gradient(90deg, #ffffff, #a1c4fd);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 2px 10px rgba(255, 255, 255, 0.3);
+  }
+  
+  .nav-buttons {
     display: flex;
     flex-direction: column;
     gap: 20px;
-}
-
-.route-card {
-    background: white;
-    border-radius: 8px;
-    padding: 15px;
-    box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
-    margin-bottom: 10px;
-    border-left: 5px solid transparent;
+    width: 100%;
+    margin-bottom: 30px;
+  }
+  
+  .nav-buttons .btn {
+    font-size: 1.1em;
+    font-weight: 600;
+    padding: 16px 30px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.15);
+    text-align: center;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
     cursor: pointer;
-    transition: 0.2s;
-}
-
-.route-card:hover {
+  }
+  
+  .nav-buttons .btn:hover {
     transform: translateY(-3px);
-    box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.15);
+    background: rgba(255, 255, 255, 0.25);
+    box-shadow: 0px 12px 20px rgba(0, 0, 0, 0.2);
+  }
+  
+  .nav-buttons .btn-primary {
+    background: linear-gradient(90deg, #4facfe, #00f2fe);
+    border: none;
+  }
+  
+  .nav-buttons .btn-primary:hover {
+    background: linear-gradient(90deg, #4facfe, #00c6ff);
+  }
+  
+  /* Collapsible sidebar for mobile */
+  .nav-toggle {
+    position: absolute;
+    left: -60px;
+    top: 20px;
+    background: linear-gradient(135deg, #ff9966, #ff5e62);
+    padding: 15px;
+    border-radius: 10px 0 0 10px;
+    cursor: pointer;
+    box-shadow: -4px 3px 15px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 1001;
+  }
+  
+  .nav-toggle:hover {
+    background: linear-gradient(135deg, #ff5e62, #ff9966);
+  }
+  
+  /* Enhanced Route Cards Container - FIXED POSITIONING TO AVOID OVERLAP */
+  #routes-container {
+    position: fixed;
+    bottom: 30px;
+    left: 30px;
+    width: calc(100% - 440px); /* Adjusted to not overlap with nav */
+    max-width: 1200px;
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    padding: 25px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-radius: 16px;
+    box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.2);
+    z-index: 900;
+    transition: all 0.3s ease;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  }
+  
+  #routes-container::-webkit-scrollbar {
+    height: 6px;
+  }
+  
+  #routes-container::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  #routes-container::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+  }
+  
+  /* Redesigned Route Cards with Modern UI */
+  .route-card {
+    min-width: 280px;
+    flex: 0 0 auto;
+    background: white;
+    padding: 22px;
+    border-radius: 16px;
+    box-shadow: 0px 8px 25px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    border-top: 1px solid rgba(255, 255, 255, 0.9);
+    border-left: 1px solid rgba(255, 255, 255, 0.9);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .route-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: linear-gradient(90deg, #4facfe, #00f2fe);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .route-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0px 14px 30px rgba(0, 0, 0, 0.15);
+  }
+  
+  .route-card:hover::before {
+    opacity: 1;
+  }
+  
+  .route-card h4 {
+    font-size: 1.3em;
+    margin-bottom: 15px;
+    color: #2a5298;
+    position: relative;
+    padding-bottom: 8px;
+  }
+  
+  .route-card h4::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 50px;
+    height: 3px;
+    background: linear-gradient(90deg, #4facfe, #00f2fe);
+    border-radius: 10px;
+  }
+  
+  .route-card p {
+    margin-bottom: 10px;
+    font-size: 1em;
+    color: #666;
+  }
+  
+  .route-card p strong {
+    color: #333;
+  }
+  
+  .route-card.safest {
+    background: linear-gradient(135deg, #f6fffb, #eefff9);
     border-left: 5px solid #4CAF50;
-}
-
-.route-card.safest {
-    background: #E8F5E9;
-    border-left: 5px solid #4CAF50;
-}
+  }
+  
+  .route-card.safest p em {
+    color: #4CAF50;
+    font-weight: bold;
+    display: inline-block;
+    padding: 5px 10px;
+    background: rgba(76, 175, 80, 0.1);
+    border-radius: 20px;
+    font-size: 0.9em;
+  }
+  
+  /* Selected route state */
+  .route-card.selected {
+    background: linear-gradient(135deg, #e6f7ff, #f0f9ff);
+    border-left: 5px solid #1890ff;
+    transform: translateY(-8px);
+  }
+  
+  /* Navigation info panel */
+  #nav-info {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 15px 20px;
+    border-radius: 12px;
+    position: fixed;
+    top: 30px;
+    left: 30px;
+    z-index: 900;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    border-left: 4px solid #4facfe;
+    font-weight: 500;
+    animation: fadeIn 0.5s ease-out forwards;
+    display: none;
+  }
+  
+  #nav-info.active {
+    display: block;
+  }
+  
+  /* Notification system with glassmorphism */
+  #notification {
+    position: fixed;
+    top: 30px;
+    left: 30px;
+    background: linear-gradient(135deg, rgba(255, 107, 129, 0.9), rgba(255, 127, 80, 0.9));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: white;
+    padding: 18px 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+    font-size: 1.2em;
+    font-weight: 600;
+    display: none;
+    z-index: 1000;
+    animation: slideIn 0.5s ease-out forwards;
+  }
+  
+  @keyframes slideIn {
+    from {
+      transform: translateY(-20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
+  /* Enhanced Modal Design */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1001;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: all 0.3s ease;
+  }
+  
+  .modal-content {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.97), rgba(245, 245, 245, 0.97));
+    margin: 10% auto;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 650px;
+    position: relative;
+    transform: scale(0.9);
+    opacity: 0;
+    animation: modalFadeIn 0.4s forwards;
+    border-top: 6px solid #4facfe;
+  }
+  
+  @keyframes modalFadeIn {
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  
+  .input-group {
+    margin-bottom: 25px;
+  }
+  
+  .input-group label {
+    display: block;
+    margin-bottom: 10px;
+    color: #333;
+    font-weight: 600;
+    font-size: 1.1em;
+  }
+  
+  .input-group input {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.8);
+  }
+  
+  .input-group input:focus {
+    border-color: #4facfe;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.3);
+    background: white;
+  }
+  
+  .modal-content button {
+    background: linear-gradient(90deg, #4facfe, #00f2fe);
+    color: white;
+    padding: 16px 35px;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.2em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0px 8px 15px rgba(79, 172, 254, 0.3);
+  }
+  
+  .modal-content button:hover {
+    background: linear-gradient(90deg, #4facfe, #00c6ff);
+    transform: translateY(-3px);
+    box-shadow: 0px 12px 20px rgba(79, 172, 254, 0.4);
+  }
+  
+  .close-btn {
+    position: absolute;
+    top: 20px;
+    right: 25px;
+    font-size: 28px;
+    cursor: pointer;
+    color: #666;
+    transition: all 0.3s ease;
+  }
+  
+  .close-btn:hover {
+    color: #ff5e62;
+    transform: scale(1.1);
+  }
+  
+  /* Danger point markers */
+  .danger-marker {
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0% {
+      transform: scale(0.95);
+      box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.7);
+    }
+    
+    70% {
+      transform: scale(1);
+      box-shadow: 0 0 0 10px rgba(255, 82, 82, 0);
+    }
+    
+    100% {
+      transform: scale(0.95);
+      box-shadow: 0 0 0 0 rgba(255, 82, 82, 0);
+    }
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 1100px) {
+    #routes-container {
+      width: calc(100% - 60px);
+      left: 30px;
+    }
+    
+    nav {
+      width: 320px;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    nav {
+      width: 280px;
+      transform: translateX(100%);
+    }
+    
+    .nav-expanded {
+      transform: translateX(0);
+    }
+    
+    #routes-container {
+      padding: 15px;
+      bottom: 20px;
+    }
+    
+    .route-card {
+      min-width: 250px;
+    }
+    
+    .modal-content {
+      width: 95%;
+      padding: 30px;
+      margin: 15% auto;
+    }
+    
+    #nav-info {
+      max-width: 300px;
+    }
+  }
+  
+  /* Loading indicators */
+  .loading-indicator {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+    z-index: 1002;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 200px;
+    height: 200px;
+  }
+  
+  .spinner {
+    width: 60px;
+    height: 60px;
+    border: 5px solid rgba(79, 172, 254, 0.3);
+    border-radius: 50%;
+    border-top-color: #4facfe;
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 15px;
+  }
+  
+  .loading-indicator p {
+    font-weight: 600;
+    font-size: 1.1em;
+    color: #333;
+    margin-top: 15px;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
+  /* App title at top */
+  .app-title {
+    position: fixed;
+    top: 20px;
+    left: 30px;
+    background: linear-gradient(135deg, rgba(16, 29, 97, 0.9), rgba(35, 93, 173, 0.9));
+    color: white;
+    padding: 12px 25px;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 1.3em;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .app-title i {
+    font-size: 1.2em;
+  }
+  
+  /* User location marker pulse effect */
+  .user-location-pulse {
+    position: relative;
+  }
+  
+  .user-location-pulse::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 30px;
+    background: rgba(79, 172, 254, 0.6);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: locationPulse 2s infinite;
+  }
+  
+  @keyframes locationPulse {
+    0% {
+      transform: translate(-50%, -50%) scale(0.5);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(-50%, -50%) scale(1.5);
+      opacity: 0;
+    }
+  }

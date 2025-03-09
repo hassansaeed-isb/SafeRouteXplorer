@@ -1,53 +1,317 @@
-/* Navbar */
+
+/* Base styles for nav */
 nav {
     position: fixed;
+    right: 0;
     top: 0;
-    left: 0;
-    width: 100%;
-    background: linear-gradient(90deg, #81c784, #a5d6a7);
+    height: 100vh;
+    width: 300px;
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
     color: white;
-    padding: 15px 0;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
     display: flex;
     flex-direction: column;
     align-items: center;
-}
-
-nav .logo {
+    padding: 25px 20px;
+    box-shadow: -5px 0 20px rgba(0, 0, 0, 0.25);
+    z-index: 1000;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  nav .logo {
     font-size: 2em;
-    font-weight: bold;
-    color: white;
-    margin-bottom: 10px;
-    letter-spacing: 2px;
-    text-transform: none;
-}
-
-nav .nav-buttons {
+    font-weight: 700;
+    margin-bottom: 30px;
+    background: linear-gradient(90deg, #ffffff, #a1c4fd);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  /* Redesigned compact route container at bottom */
+  #routes-container {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: calc(100% - 340px);
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    padding: 15px;
     display: flex;
-    justify-content: center;
+    overflow-x: auto;
     gap: 15px;
-    flex-wrap: wrap;
-}
-
-.nav-buttons .btn {
-    background-color: white;
-    color: #388e3c;
-    padding: 12px 25px;
-    border: none;
-    border-radius: 30px;
-    font-size: 1em;
-    font-weight: bold;
-    text-transform: capitalize;
-    cursor: pointer;
+    z-index: 900;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+    height: auto;
+    max-height: 150px;
+  }
+  
+  #routes-container::-webkit-scrollbar {
+    height: 5px;
+  }
+  
+  #routes-container::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+  }
+  
+  /* Modern compact route cards */
+  .route-card {
+    min-width: 220px;
+    flex: 0 0 auto;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    padding: 12px 15px;
     transition: all 0.3s ease;
-    box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
-    text-align: center;
-}
-
-.nav-buttons .btn:hover {
-    background: #66bb6a;
+    cursor: pointer;
+    position: relative;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .route-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #4facfe, #00f2fe);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .route-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  }
+  
+  .route-card:hover::before {
+    opacity: 1;
+  }
+  
+  .route-card h4 {
+    font-size: 1.1em;
+    color: #2a5298;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  
+  .route-card p {
+    margin: 3px 0;
+    font-size: 0.9em;
+    color: #666;
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .route-card.safest {
+    background: linear-gradient(135deg, #f6fffb, #eefff9);
+    border-left: 4px solid #4CAF50;
+  }
+  
+  .route-card.safest::before {
+    background: #4CAF50;
+    opacity: 1;
+  }
+  
+  .route-card.selected {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    border-left: 4px solid #1890ff;
+  }
+  
+  .route-card.selected::before {
+    background: #1890ff;
+    opacity: 1;
+  }
+  
+  /* Safety badge for safest route */
+  .route-card .safety-badge {
+    position: absolute;
+    top: -10px;
+    right: 10px;
+    background: #4CAF50;
     color: white;
-    transform: translateY(-3px);
-    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
-}
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-size: 0.8em;
+    font-weight: 600;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 10;
+  }
+  
+  /* Mobile-specific navigation toggle button */
+  #mobile-nav-toggle {
+    display: none;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    z-index: 1100;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  #mobile-nav-toggle span {
+    position: relative;
+    width: 24px;
+    height: 2px;
+    background: #2a5298;
+    transition: all 0.3s ease;
+  }
+  
+  #mobile-nav-toggle span::before,
+  #mobile-nav-toggle span::after {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 2px;
+    background: #2a5298;
+    transition: all 0.3s ease;
+  }
+  
+  #mobile-nav-toggle span::before {
+    transform: translateY(-8px);
+  }
+  
+  #mobile-nav-toggle span::after {
+    transform: translateY(8px);
+  }
+  
+  #mobile-nav-toggle.active span {
+    background: transparent;
+  }
+  
+  #mobile-nav-toggle.active span::before {
+    transform: rotate(45deg);
+  }
+  
+  #mobile-nav-toggle.active span::after {
+    transform: rotate(-45deg);
+  }
+  
+  /* Mobile bottom navigation bar */
+  .mobile-nav-bar {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background: white;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    z-index: 950;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 10px;
+  }
+  
+  .mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 12px;
+    color: #666;
+    font-size: 0.7rem;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  
+  .mobile-nav-item.active {
+    color: #2a5298;
+  }
+  
+  .mobile-nav-item svg {
+    width: 24px;
+    height: 24px;
+    margin-bottom: 4px;
+    fill: currentColor;
+  }
+  
+  /* Mobile location finder button */
+  .mobile-location-finder {
+    position: fixed;
+    bottom: 75px;
+    right: 20px;
+    width: 55px;
+    height: 55px;
+    background: #2a5298;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    z-index: 960;
+    cursor: pointer;
+  }
+  
+  .mobile-location-finder svg {
+    width: 28px;
+    height: 28px;
+    fill: white;
+  }
+  
+  /* Responsive layouts */
+  @media (max-width: 1024px) {
+    #routes-container {
+      width: calc(100% - 340px);
+    }
+  }
+  
+  @media (max-width: 768px) {
+    /* Hide desktop navigation and adjust for mobile */
+    nav {
+      transform: translateX(100%);
+      width: 80%;
+      max-width: 300px;
+    }
+    
+    nav.nav-expanded {
+      transform: translateX(0);
+    }
+    
+    #mobile-nav-toggle {
+      display: flex;
+    }
+    
+    .mobile-nav-bar {
+      display: flex;
+    }
+    
+    .mobile-location-finder {
+      display: flex;
+    }
+    
+    /* Adjust route container to not overlap with bottom nav */
+    #routes-container {
+      width: calc(100% - 40px);
+      left: 20px;
+      bottom: 75px;
+    }
+    
+    .route-card {
+      min-width: 200px;
+    }
+  }
+  
+  /* Extra small devices */
+  @media (max-width: 480px) {
+    .route-card {
+      min-width: 150px;
+    }
+    
+    nav .logo {
+      font-size: 1.6em;
+    }
+  }

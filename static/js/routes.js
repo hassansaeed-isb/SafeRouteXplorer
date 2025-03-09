@@ -22,7 +22,7 @@ function displayRoutes(routes) {
         card.innerHTML = `
             <h4>Route ${index + 1}</h4>
             <p><strong>Distance:</strong> ${route.distance || 'N/A'}</p>
-            <p><strong>Duration:</strong> ${route.duration || 'N/A'}</p>
+            
             <p><strong>Safety Index:</strong> ${route.safety_index}</p>
             ${isSafest ? '<p><em>Safest Route</em></p>' : ''}
         `;
