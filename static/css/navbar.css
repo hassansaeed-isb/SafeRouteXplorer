@@ -1,317 +1,517 @@
+/* Complete Navigation Bar Styling for SafeRouteXplorer */
 
-/* Base styles for nav */
+/* Base styles for side navigation */
 nav {
-    position: fixed;
-    right: 0;
-    top: 0;
-    height: 100vh;
-    width: 300px;
-    background: linear-gradient(135deg, #1e3c72, #2a5298);
-    color: white;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 25px 20px;
-    box-shadow: -5px 0 20px rgba(0, 0, 0, 0.25);
-    z-index: 1000;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  
-  nav .logo {
-    font-size: 2em;
-    font-weight: 700;
-    margin-bottom: 30px;
-    background: linear-gradient(90deg, #ffffff, #a1c4fd);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-  
-  /* Redesigned compact route container at bottom */
-  #routes-container {
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    width: calc(100% - 340px);
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-    padding: 15px;
-    display: flex;
-    overflow-x: auto;
-    gap: 15px;
-    z-index: 900;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-    height: auto;
-    max-height: 150px;
-  }
-  
-  #routes-container::-webkit-scrollbar {
-    height: 5px;
-  }
-  
-  #routes-container::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 10px;
-  }
-  
-  /* Modern compact route cards */
-  .route-card {
-    min-width: 220px;
-    flex: 0 0 auto;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    padding: 12px 15px;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    position: relative;
-    overflow: visible;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .route-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    background: linear-gradient(90deg, #4facfe, #00f2fe);
+  position: fixed;
+  right: 0;
+  top: 0;
+  height: 100vh;
+  width: 260px;
+  background: linear-gradient(135deg, rgba(35, 47, 62, 0.92), rgba(20, 30, 48, 0.92));
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px 12px;
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto;
+}
+
+/* SRX Logo */
+nav .logo {
+  width: 140px;
+  height: 55px;
+  margin-bottom: 20px;
+  background-image: url('../assets/images/srx-logo.png');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+/* Navigation buttons container */
+.nav-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+/* Navigation buttons styling */
+.nav-buttons .btn {
+  font-size: 0.95em;
+  font-weight: 600;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.15);
+  text-align: center;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+  cursor: pointer;
+}
+
+.nav-buttons .btn:hover {
+  transform: translateY(-3px);
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: 0px 12px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Mobile hamburger button */
+.nav-toggle {
+  display: none;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 45px;
+  height: 45px;
+  background: white;
+  border-radius: 50%;
+  z-index: 1001;
+  cursor: pointer;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  align-items: center;
+  justify-content: center;
+}
+
+.hamburger {
+  width: 20px;
+  height: 2px;
+  background: #2c3e50;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.hamburger:before,
+.hamburger:after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 2px;
+  background: #2c3e50;
+  transition: all 0.3s ease;
+}
+
+.hamburger:before {
+  top: -6px;
+}
+
+.hamburger:after {
+  top: 6px;
+}
+
+.nav-active .hamburger {
+  background: transparent;
+}
+
+.nav-active .hamburger:before {
+  transform: rotate(45deg);
+  top: 0;
+}
+
+.nav-active .hamburger:after {
+  transform: rotate(-45deg);
+  top: 0;
+}
+
+/* Mobile bottom navigation */
+.mobile-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 65px;
+  background: #ffffff;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 950;
+  padding: 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.mobile-nav-buttons {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.mobile-nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 20%;
+  color: #777;
+  transition: all 0.3s ease;
+  position: relative;
+  padding: 0;
+}
+
+.mobile-nav-btn i {
+  font-size: 22px;
+  margin-bottom: 4px;
+  transition: all 0.2s ease;
+}
+
+.mobile-nav-btn span {
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  padding: 0 2px;
+  transition: all 0.2s ease;
+}
+
+.mobile-nav-btn.active {
+  color: #3498db;
+  background-color: rgba(52, 152, 219, 0.08);
+}
+
+/* Special styling for location button */
+.mobile-nav-btn[data-action="location"] {
+  color: #3498db;
+}
+
+/* Floating action button for mobile */
+.fab {
+  display: none;
+  position: fixed;
+  bottom: 75px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  background: #3498db;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: 950;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.fab:hover, .fab:active {
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+.fab i {
+  font-size: 22px;
+  color: white;
+}
+
+/* Routes Container positioning */
+#routes-container {
+  position: fixed;
+  bottom: 25px;
+  left: 20px;
+  width: calc(100% - 300px);
+  max-width: 900px;
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-radius: 14px;
+  box-shadow: 0px 8px 25px rgba(0, 0, 0, 0.15);
+  z-index: 900;
+  transition: all 0.3s ease;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  max-height: 130px;
+}
+
+#routes-container::-webkit-scrollbar {
+  height: 5px;
+}
+
+#routes-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#routes-container::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 20px;
+}
+
+/* Route cards styling */
+.route-card {
+  min-width: 180px;
+  max-width: 220px;
+  flex: 0 0 auto;
+  background: white;
+  padding: 12px;
+  border-radius: 10px;
+  box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  border-top: 1px solid rgba(255, 255, 255, 0.9);
+  border-left: 1px solid rgba(255, 255, 255, 0.9);
+  position: relative;
+  overflow: visible;
+}
+
+.route-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, #3498db, #2980b9);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.route-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.12);
+}
+
+.route-card:hover::before {
+  opacity: 1;
+}
+
+.route-card h4 {
+  font-size: 1em;
+  margin-bottom: 8px;
+  color: #2c3e50;
+  position: relative;
+  padding-bottom: 5px;
+}
+
+.route-card h4::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 35px;
+  height: 2px;
+  background: linear-gradient(90deg, #3498db, #2980b9);
+  border-radius: 10px;
+}
+
+.route-card p {
+  margin-bottom: 6px;
+  font-size: 0.85em;
+  color: #666;
+}
+
+.route-card p strong {
+  color: #333;
+}
+
+/* Safest route styling */
+.route-card.safest {
+  background: linear-gradient(135deg, #f0f9ff, #e1f5fe);
+  border-left: 4px solid #3498db;
+  z-index: 2;
+}
+
+/* Safest route badge */
+.safest-badge,
+.route-card.safest p em {
+  color: white !important;
+  font-weight: bold !important;
+  display: inline-block !important;
+  padding: 3px 8px !important;
+  background: #3498db !important;
+  border-radius: 20px !important;
+  font-size: 0.8em !important;
+  margin-top: 4px !important;
+  margin-bottom: 2px !important;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 5 !important;
+}
+
+/* Make parent of badge visible */
+.route-card.safest p:has(em),
+.route-card p:has(.safest-badge) {
+  display: block !important;
+  margin-top: 5px !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Selected route styling */
+.route-card.selected {
+  background: linear-gradient(135deg, #e1f5fe, #e8f4f8);
+  border-left: 4px solid #3498db;
+  transform: translateY(-4px);
+}
+
+/* Ripple effect for buttons */
+.ripple-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  transform: scale(0);
+  animation: ripple-animation 0.6s linear;
+  pointer-events: none;
+}
+
+@keyframes ripple-animation {
+  to {
+    transform: scale(2);
     opacity: 0;
-    transition: opacity 0.3s ease;
+  }
+}
+
+/* Navigation backdrop overlay */
+.nav-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  display: none;
+}
+
+/* Media queries for responsive design */
+@media (max-width: 1200px) {
+  #routes-container {
+    width: calc(100% - 280px);
+  }
+}
+
+@media (max-width: 992px) {
+  nav {
+    width: 240px;
   }
   
-  .route-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  #routes-container {
+    width: calc(100% - 260px);
   }
   
-  .route-card:hover::before {
-    opacity: 1;
+  .route-card {
+    min-width: 170px;
+  }
+}
+
+@media (max-width: 768px) {
+  nav {
+    transform: translateX(100%);
+    width: 75%;
+    max-width: 260px;
+  }
+  
+  nav.active {
+    transform: translateX(0);
+  }
+  
+  .nav-toggle {
+    display: flex;
+  }
+  
+  #routes-container {
+    width: calc(100% - 40px);
+    left: 20px;
+    bottom: 75px;
+    padding: 12px;
+  }
+  
+  .mobile-nav, .fab {
+    display: flex;
+  }
+  
+  .safest-route-display {
+    top: 75px;
+  }
+  
+  #nav-info {
+    top: 75px;
+    max-width: 280px;
+  }
+  
+  /* Mobile-specific badge styling */
+  .safest-badge,
+  .route-card.safest p em {
+    padding: 3px 10px !important;
+    font-size: 0.75em !important;
+    margin-top: 5px !important;
+  }
+  
+  /* Ensure route cards don't hide content on mobile */
+  .route-card {
+    max-height: none;
+    padding-bottom: 30px;
+  }
+}
+
+@media (max-width: 576px) {
+  .route-card {
+    min-width: 160px;
+    padding: 10px;
+  }
+  
+  .modal-content {
+    padding: 20px;
+    width: 95%;
+  }
+  
+  .safest-route-display {
+    left: 20px;
+    right: 20px;
+    width: calc(100% - 40px);
+    text-align: center;
+  }
+  
+  #nav-info {
+    left: 20px;
+    max-width: calc(100% - 40px);
   }
   
   .route-card h4 {
-    font-size: 1.1em;
-    color: #2a5298;
-    margin-bottom: 8px;
-    font-weight: 600;
+    font-size: 0.95em;
   }
   
   .route-card p {
-    margin: 3px 0;
-    font-size: 0.9em;
-    color: #666;
-    display: flex;
-    justify-content: space-between;
-  }
-  
-  .route-card.safest {
-    background: linear-gradient(135deg, #f6fffb, #eefff9);
-    border-left: 4px solid #4CAF50;
-  }
-  
-  .route-card.safest::before {
-    background: #4CAF50;
-    opacity: 1;
-  }
-  
-  .route-card.selected {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-    border-left: 4px solid #1890ff;
-  }
-  
-  .route-card.selected::before {
-    background: #1890ff;
-    opacity: 1;
-  }
-  
-  /* Safety badge for safest route */
-  .route-card .safety-badge {
-    position: absolute;
-    top: -10px;
-    right: 10px;
-    background: #4CAF50;
-    color: white;
-    padding: 4px 10px;
-    border-radius: 10px;
     font-size: 0.8em;
-    font-weight: 600;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    z-index: 10;
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 374px) {
+  .mobile-nav-btn i {
+    font-size: 20px;
+    margin-bottom: 2px;
   }
   
-  /* Mobile-specific navigation toggle button */
-  #mobile-nav-toggle {
-    display: none;
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    width: 50px;
-    height: 50px;
-    background: white;
-    border-radius: 50%;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    z-index: 1100;
-    cursor: pointer;
-    align-items: center;
-    justify-content: center;
+  .mobile-nav-btn span {
+    font-size: 9px;
   }
   
-  #mobile-nav-toggle span {
-    position: relative;
-    width: 24px;
-    height: 2px;
-    background: #2a5298;
-    transition: all 0.3s ease;
-  }
-  
-  #mobile-nav-toggle span::before,
-  #mobile-nav-toggle span::after {
-    content: '';
-    position: absolute;
-    width: 24px;
-    height: 2px;
-    background: #2a5298;
-    transition: all 0.3s ease;
-  }
-  
-  #mobile-nav-toggle span::before {
-    transform: translateY(-8px);
-  }
-  
-  #mobile-nav-toggle span::after {
-    transform: translateY(8px);
-  }
-  
-  #mobile-nav-toggle.active span {
-    background: transparent;
-  }
-  
-  #mobile-nav-toggle.active span::before {
-    transform: rotate(45deg);
-  }
-  
-  #mobile-nav-toggle.active span::after {
-    transform: rotate(-45deg);
-  }
-  
-  /* Mobile bottom navigation bar */
-  .mobile-nav-bar {
-    display: none;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
+  .mobile-nav {
     height: 60px;
-    background: white;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-    z-index: 950;
-    justify-content: space-around;
-    align-items: center;
-    padding: 0 10px;
   }
   
-  .mobile-nav-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 8px 12px;
-    color: #666;
-    font-size: 0.7rem;
-    font-weight: 500;
-    cursor: pointer;
+  .route-card {
+    min-width: 150px;
   }
-  
-  .mobile-nav-item.active {
-    color: #2a5298;
-  }
-  
-  .mobile-nav-item svg {
-    width: 24px;
-    height: 24px;
-    margin-bottom: 4px;
-    fill: currentColor;
-  }
-  
-  /* Mobile location finder button */
-  .mobile-location-finder {
-    position: fixed;
-    bottom: 75px;
-    right: 20px;
-    width: 55px;
-    height: 55px;
-    background: #2a5298;
-    border-radius: 50%;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    z-index: 960;
-    cursor: pointer;
-  }
-  
-  .mobile-location-finder svg {
-    width: 28px;
-    height: 28px;
-    fill: white;
-  }
-  
-  /* Responsive layouts */
-  @media (max-width: 1024px) {
-    #routes-container {
-      width: calc(100% - 340px);
-    }
-  }
-  
-  @media (max-width: 768px) {
-    /* Hide desktop navigation and adjust for mobile */
-    nav {
-      transform: translateX(100%);
-      width: 80%;
-      max-width: 300px;
-    }
-    
-    nav.nav-expanded {
-      transform: translateX(0);
-    }
-    
-    #mobile-nav-toggle {
-      display: flex;
-    }
-    
-    .mobile-nav-bar {
-      display: flex;
-    }
-    
-    .mobile-location-finder {
-      display: flex;
-    }
-    
-    /* Adjust route container to not overlap with bottom nav */
-    #routes-container {
-      width: calc(100% - 40px);
-      left: 20px;
-      bottom: 75px;
-    }
-    
-    .route-card {
-      min-width: 200px;
-    }
-  }
-  
-  /* Extra small devices */
-  @media (max-width: 480px) {
-    .route-card {
-      min-width: 150px;
-    }
-    
-    nav .logo {
-      font-size: 1.6em;
-    }
-  }
+}

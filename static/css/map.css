@@ -1,4 +1,4 @@
-/* map.css - Enhancing Map UI */
+/* Enhanced map.css - Improved Map UI */
 
 /* Fullscreen Map */
 #map {
@@ -12,18 +12,160 @@
     z-index: 0;
 }
 
-/* Notification System */
+/* Custom Google Maps styling for better readability */
+.gm-style {
+    font-family: 'Poppins', 'Segoe UI', Roboto, sans-serif !important;
+}
+
+/* Makes Google Maps controls more stylish */
+.gm-style-mtc button, 
+.gm-style .gm-style-mtc div, 
+.gm-style .gm-style-mtc ul, 
+.gm-style .gm-style-mtc li {
+    border-radius: 8px !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Enhances Google Maps info windows */
+.gm-style .gm-style-iw-c {
+    border-radius: 10px !important;
+    padding: 12px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Enhanced notification system with animation */
 #notification {
     position: fixed;
     top: 20px;
-    left: 20px;
+    left: 50%;
+    transform: translateX(-50%);
     background: linear-gradient(45deg, #ff4e50, #f9d423);
     color: white;
     padding: 15px 25px;
     border-radius: 10px;
-    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
-    font-size: 1.5em;
+    box-shadow: 0 6px 20px rgba(255, 78, 80, 0.35);
+    font-size: 1.1em;
     font-weight: bold;
     display: none;
     z-index: 1000;
+    max-width: 90%;
+    text-align: center;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 6px 20px rgba(255, 78, 80, 0.35); }
+    50% { box-shadow: 0 8px 30px rgba(255, 78, 80, 0.5); }
+    100% { box-shadow: 0 6px 20px rgba(255, 78, 80, 0.35); }
+}
+
+/* Map markers (Google Maps custom markers) */
+.custom-marker {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+}
+
+.custom-marker.danger-high {
+    background-color: #ff4d4d;
+}
+
+.custom-marker.danger-medium {
+    background-color: #ff9800;
+}
+
+.custom-marker.danger-low {
+    background-color: #ffeb3b;
+}
+
+.custom-marker.safe {
+    background-color: #4caf50;
+}
+
+/* Custom info window content */
+.info-window {
+    font-family: 'Poppins', 'Segoe UI', sans-serif;
+    padding: 5px;
+}
+
+.info-window h3 {
+    margin: 0 0 5px 0;
+    font-size: 1.1em;
+    color: #333;
+}
+
+.info-window p {
+    margin: 3px 0;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.info-window .danger-indicator {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 10px;
+    background: #ff4d4d;
+    color: white;
+    font-size: 0.8em;
+    margin-top: 5px;
+    font-weight: bold;
+}
+
+.info-window .danger-indicator.medium {
+    background: #ff9800;
+}
+
+.info-window .danger-indicator.low {
+    background: #ffeb3b;
+    color: #333;
+}
+
+/* Map controls container */
+.map-controls {
+    position: fixed;
+    bottom: 30px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 900;
+}
+
+.map-control-btn {
+    width: 40px;
+    height: 40px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.map-control-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.map-control-btn i {
+    color: #333;
+    font-size: 1.2em;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    #notification {
+        top: 80px;
+        padding: 12px 20px;
+        font-size: 1em;
+    }
+    
+    .map-controls {
+        bottom: 80px;
+    }
 }

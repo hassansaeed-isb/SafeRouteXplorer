@@ -1,4 +1,4 @@
-/* modal.css - Styling for Location Modal */
+/* Enhanced modal.css - Styling for Location Modal with improved aesthetics */
 
 .modal {
     display: none;
@@ -9,61 +9,143 @@
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .modal-content {
     background-color: white;
-    margin: 15% auto;
-    padding: 40px;
+    margin: 10% auto;
+    padding: 35px 40px;
     border-radius: 15px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     width: 90%;
-    max-width: 600px;
+    max-width: 550px;
     position: relative;
+    animation: slideIn 0.4s ease-out;
+    transform-origin: top center;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.modal-header h2 {
+    color: #2c3e50;
+    font-size: 1.5em;
+    margin-bottom: 10px;
+}
+
+.modal-header p {
+    color: #7f8c8d;
+    font-size: 0.9em;
+    max-width: 400px;
+    margin: 0 auto;
 }
 
 .input-group {
-    margin-bottom: 20px;
+    margin-bottom: 22px;
+    position: relative;
 }
 
 .input-group label {
     display: block;
     margin-bottom: 8px;
-    color: #333;
+    color: #34495e;
     font-weight: 500;
+    font-size: 0.95em;
 }
 
 .input-group input {
     width: 100%;
-    padding: 12px;
+    padding: 12px 15px;
     border: 2px solid #e0e0e0;
-    border-radius: 6px;
-    font-size: 16px;
-    transition: border-color 0.3s ease;
+    border-radius: 10px;
+    font-size: 1em;
+    transition: all 0.3s ease;
+    background-color: #f8f9fa;
 }
 
 .input-group input:focus {
-    border-color: #0072ff;
+    border-color: #3498db;
+    background-color: #fff;
     outline: none;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
 }
 
-.modal-content button {
-    background-color: #0072ff;
+.input-group.with-icon {
+    position: relative;
+}
+
+.input-group.with-icon i {
+    position: absolute;
+    left: 15px;
+    top: 42px;
+    color: #95a5a6;
+}
+
+.input-group.with-icon input {
+    padding-left: 40px;
+}
+
+.modal-footer {
+    margin-top: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-content button.primary-btn {
+    background: linear-gradient(135deg, #3498db, #2980b9);
     color: white;
-    padding: 15px 35px;
+    padding: 12px 30px;
     border: none;
     border-radius: 30px;
-    font-size: 1.2em;
-    font-weight: bold;
+    font-size: 1em;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0px 3px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+    flex-grow: 0;
 }
 
-.modal-content button:hover {
-    background: #0056b3;
-    transform: translateY(-3px);
-    box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.2);
+.modal-content button.primary-btn:hover {
+    background: linear-gradient(135deg, #2980b9, #2573a7);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(52, 152, 219, 0.4);
+}
+
+.modal-content button.secondary-btn {
+    background: transparent;
+    color: #3498db;
+    border: 1px solid #3498db;
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.modal-content button.secondary-btn:hover {
+    background-color: #f0f7fc;
 }
 
 .close-btn {
@@ -71,5 +153,112 @@
     top: 15px;
     right: 20px;
     font-size: 24px;
+    color: #95a5a6;
     cursor: pointer;
+    transition: all 0.3s ease;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.close-btn:hover {
+    color: #e74c3c;
+    background-color: #f9f9f9;
+}
+
+/* Recent locations list */
+.recent-locations {
+    margin-top: 15px;
+}
+
+.recent-locations h4 {
+    font-size: 0.85em;
+    color: #7f8c8d;
+    margin-bottom: 8px;
+}
+
+.location-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.location-chip {
+    background-color: #f0f7fc;
+    border: 1px solid #d4e6f1;
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 0.85em;
+    color: #3498db;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.location-chip:hover {
+    background-color: #e1f0fa;
+    transform: translateY(-1px);
+}
+
+/* Loading animation */
+.loading-spinner {
+    display: none;
+    position: absolute;
+    right: 10px;
+    top: 42px;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(52, 152, 219, 0.3);
+    border-radius: 50%;
+    border-top-color: #3498db;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+    .modal-content {
+        margin: 15% auto;
+        padding: 25px;
+        width: 90%;
+    }
+    
+    .modal-header h2 {
+        font-size: 1.3em;
+    }
+    
+    .modal-content button.primary-btn {
+        padding: 10px 25px;
+        font-size: 0.95em;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-content {
+        margin: 20% auto;
+        padding: 20px;
+    }
+    
+    .modal-header h2 {
+        font-size: 1.2em;
+    }
+    
+    .input-group input {
+        padding: 10px 12px;
+        font-size: 0.95em;
+    }
+    
+    .modal-footer {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .modal-content button.primary-btn {
+        width: 100%;
+    }
 }
