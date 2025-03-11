@@ -7,36 +7,21 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/map.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <!-- Mobile nav toggle button -->
-    <div class="nav-toggle">
-        <div class="hamburger"></div>
+    <!-- Logo in top right corner -->
+    <div class="srx-logo">
+        <img src="{{ url_for('static', filename='assets/images/srx-logo.png') }}" alt="SRX Logo">
     </div>
     
-    <!-- Main navigation sidebar -->
-    <nav>
-        <!-- Logo div that will use the background image from CSS -->
-        <div class="logo"></div>
-        <div class="nav-buttons">
-            <button class="btn" id="enable-alerts">
-                <i class="fas fa-bell"></i> Enable Alerts
-            </button>
-            <button class="btn" id="start-nav">
-                <i class="fas fa-play"></i> Start Nav
-            </button>
-            <button class="btn" id="stop-nav" style="display:none;">
-                <i class="fas fa-stop"></i> Stop Nav
-            </button>
-            <button class="btn" id="set-location">
-                <i class="fas fa-map-marker-alt"></i> Set Route
-            </button>
-            <button class="btn" id="simulate-movement">
-                <i class="fas fa-route"></i> Simulate
-            </button>
-        </div>
-    </nav>
+    <!-- Set Location Button -->
+    <div class="set-location-container">
+        <button id="set-location" class="set-location-btn">
+            <i class="fas fa-map-marker-alt"></i> Set Route
+        </button>
+    </div>
 
     <!-- Route title display -->
     <div class="safest-route-display">
@@ -49,41 +34,33 @@
     <!-- Map container -->
     <div id="map"></div>
     
-    <!-- Routes container -->
+    <!-- Routes container - now full width -->
     <div id="routes-container"></div>
+    
+    <!-- Control buttons -->
+    <div class="map-controls">
+        <button id="start-nav" class="control-btn">
+            <i class="fas fa-play"></i>
+        </button>
+        <button id="stop-nav" class="control-btn" style="display:none;">
+            <i class="fas fa-stop"></i>
+        </button>
+        <button id="enable-alerts" class="control-btn">
+            <i class="fas fa-bell"></i>
+        </button>
+        <button id="simulate-movement" class="control-btn">
+            <i class="fas fa-route"></i>
+        </button>
+    </div>
     
     <!-- Safety notification -->
     <div id="notification"></div>
 
-    <!-- Mobile bottom navigation -->
-    <div class="mobile-nav">
-        <div class="mobile-nav-buttons">
-            <div class="mobile-nav-btn" data-action="location">
-                <i class="fas fa-map-marker-alt"></i>
-                <span>Route</span>
-            </div>
-            <div class="mobile-nav-btn" data-action="start">
-                <i class="fas fa-play"></i>
-                <span>Start</span>
-            </div>
-            <div class="mobile-nav-btn" data-action="stop">
-                <i class="fas fa-stop"></i>
-                <span>Stop</span>
-            </div>
-            <div class="mobile-nav-btn" data-action="alerts">
-                <i class="fas fa-bell"></i>
-                <span>Alerts</span>
-            </div>
-            <div class="mobile-nav-btn" data-action="simulate">
-                <i class="fas fa-route"></i>
-                <span>Sim</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Mobile floating action button -->
-    <div class="fab">
-        <i class="fas fa-map-marker-alt" style="color: white; font-size: 20px;"></i>
+    <!-- Mobile Set Route button at bottom -->
+    <div class="mobile-set-route">
+        <button id="mobile-set-location">
+            <i class="fas fa-map-marker-alt"></i> Set Route
+        </button>
     </div>
 
     <!-- Audio for alerts -->
@@ -110,20 +87,6 @@
         </div>
     </div>
 
-    <!-- SRX Logo SVG for the nav bar (hidden, used as resource) -->
-    <div style="display: none;">
-        <svg id="srx-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 80">
-            <defs>
-                <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stop-color="#ffffff" />
-                    <stop offset="100%" stop-color="#a1c4fd" />
-                </linearGradient>
-            </defs>
-            <text x="10" y="50" fill="url(#logo-gradient)" font-family="'Poppins', sans-serif" font-weight="800" font-size="40">SRX</text>
-            <path d="M200 30 L220 50 L200 70" stroke="url(#logo-gradient)" stroke-width="5" fill="none" />
-        </svg>
-    </div>
-
     <!-- Load Google Maps API -->
     <script src="https://maps.googleapis.com/maps/api/js?key={{ api_key }}&callback=initApp" async defer></script>
     
@@ -134,7 +97,7 @@
     <script src="{{ url_for('static', filename='js/routes.js') }}"></script>
     <script src="{{ url_for('static', filename='js/navigation.js') }}"></script>
     <script src="{{ url_for('static', filename='js/simulation.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/mobile.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/navbar.js') }}"></script>
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

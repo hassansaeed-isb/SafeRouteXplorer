@@ -1,6 +1,7 @@
 /**
  * Enhanced route handling for SafeRouteXplorer
  * Improved route cards with better visibility for safest route
+ * Updated to fix UI issues - including route title control
  */
 
 let routePolylines = [];
@@ -105,6 +106,13 @@ function displayRoutes(routes) {
         enhanceSafestRouteBadge();
     }
     
+    // Hide route title until user explicitly selects
+    const routeTitle = document.querySelector('.safest-route-display');
+    if (routeTitle) {
+        routeTitle.style.display = 'none';
+        routeTitle.classList.remove('active');
+    }
+    
     return chosenRouteIndex;
 }
 
@@ -127,6 +135,23 @@ function selectRoute(index) {
     
     if (selectedCard) {
         selectedCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+    
+    // Show route title when a route is explicitly selected
+    const routeTitle = document.querySelector('.safest-route-display');
+    if (routeTitle) {
+        routeTitle.style.display = 'block';
+        routeTitle.classList.add('active');
+        
+        // Update title text to match current route
+        const startLocation = document.getElementById("start-location").value || "Current Location";
+        const endLocation = document.getElementById("end-location").value || currentDestination;
+        const titleText = `Safest Route from ${startLocation} to ${endLocation}`;
+        
+        const titleHeading = routeTitle.querySelector('h3');
+        if (titleHeading) {
+            titleHeading.textContent = titleText;
+        }
     }
     
     return chosenRouteIndex;
@@ -282,8 +307,16 @@ function initializeModal() {
             return;
         }
         
-        document.querySelector(".safest-route-display h3").textContent = 
-            `Safest Route from ${startLocation} to ${endLocation}`;
+        // Update route title text but keep it hidden until selection
+        const routeTitle = document.querySelector(".safest-route-display");
+        if (routeTitle) {
+            const routeTitleH3 = routeTitle.querySelector('h3');
+            if (routeTitleH3) {
+                routeTitleH3.textContent = `Safest Route from ${startLocation} to ${endLocation}`;
+            }
+            routeTitle.style.display = 'none';
+            routeTitle.classList.remove('active');
+        }
         
         currentDestination = endLocation;
         

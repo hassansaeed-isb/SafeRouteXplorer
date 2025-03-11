@@ -1,517 +1,611 @@
-/* Complete Navigation Bar Styling for SafeRouteXplorer */
+/* simplified.css - Completely restyled UI without navigation bar */
 
-/* Base styles for side navigation */
-nav {
-  position: fixed;
-  right: 0;
-  top: 0;
-  height: 100vh;
-  width: 260px;
-  background: linear-gradient(135deg, rgba(35, 47, 62, 0.92), rgba(20, 30, 48, 0.92));
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  color: white;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 18px 12px;
-  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow-y: auto;
-}
-
-/* SRX Logo */
-nav .logo {
-  width: 140px;
-  height: 55px;
-  margin-bottom: 20px;
-  background-image: url('../assets/images/srx-logo.png');
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: contain;
-}
-
-/* Navigation buttons container */
-.nav-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 100%;
-  margin-bottom: 15px;
-}
-
-/* Navigation buttons styling */
-.nav-buttons .btn {
-  font-size: 0.95em;
-  font-weight: 600;
-  padding: 10px 16px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.15);
-  text-align: center;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(5px);
-  cursor: pointer;
-}
-
-.nav-buttons .btn:hover {
-  transform: translateY(-3px);
-  background: rgba(255, 255, 255, 0.25);
-  box-shadow: 0px 12px 20px rgba(0, 0, 0, 0.2);
-}
-
-/* Mobile hamburger button */
-.nav-toggle {
-  display: none;
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  width: 45px;
-  height: 45px;
-  background: white;
-  border-radius: 50%;
-  z-index: 1001;
-  cursor: pointer;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-  align-items: center;
-  justify-content: center;
-}
-
-.hamburger {
-  width: 20px;
-  height: 2px;
-  background: #2c3e50;
-  position: relative;
-  transition: all 0.3s ease;
-}
-
-.hamburger:before,
-.hamburger:after {
-  content: '';
-  position: absolute;
-  width: 20px;
-  height: 2px;
-  background: #2c3e50;
-  transition: all 0.3s ease;
-}
-
-.hamburger:before {
-  top: -6px;
-}
-
-.hamburger:after {
-  top: 6px;
-}
-
-.nav-active .hamburger {
-  background: transparent;
-}
-
-.nav-active .hamburger:before {
-  transform: rotate(45deg);
-  top: 0;
-}
-
-.nav-active .hamburger:after {
-  transform: rotate(-45deg);
-  top: 0;
-}
-
-/* Mobile bottom navigation */
-.mobile-nav {
-  display: none;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 65px;
-  background: #ffffff;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-  z-index: 950;
-  padding: 0;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.mobile-nav-buttons {
-  display: flex;
-  justify-content: space-evenly;
-  align-items: center;
-  height: 100%;
-  width: 100%;
-  max-width: 500px;
-  margin: 0 auto;
-}
-
-.mobile-nav-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  width: 20%;
-  color: #777;
-  transition: all 0.3s ease;
-  position: relative;
-  padding: 0;
-}
-
-.mobile-nav-btn i {
-  font-size: 22px;
-  margin-bottom: 4px;
-  transition: all 0.2s ease;
-}
-
-.mobile-nav-btn span {
-  font-size: 10px;
-  font-weight: 600;
-  text-align: center;
-  line-height: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
-  padding: 0 2px;
-  transition: all 0.2s ease;
-}
-
-.mobile-nav-btn.active {
-  color: #3498db;
-  background-color: rgba(52, 152, 219, 0.08);
-}
-
-/* Special styling for location button */
-.mobile-nav-btn[data-action="location"] {
-  color: #3498db;
-}
-
-/* Floating action button for mobile */
-.fab {
-  display: none;
-  position: fixed;
-  bottom: 75px;
-  right: 20px;
-  width: 56px;
-  height: 56px;
-  background: #3498db;
-  border-radius: 50%;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  z-index: 950;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.fab:hover, .fab:active {
-  transform: scale(1.05);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
-}
-
-.fab i {
-  font-size: 22px;
-  color: white;
-}
-
-/* Routes Container positioning */
-#routes-container {
-  position: fixed;
-  bottom: 25px;
-  left: 20px;
-  width: calc(100% - 300px);
-  max-width: 900px;
-  display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border-radius: 14px;
-  box-shadow: 0px 8px 25px rgba(0, 0, 0, 0.15);
-  z-index: 900;
-  transition: all 0.3s ease;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-  max-height: 130px;
-}
-
-#routes-container::-webkit-scrollbar {
-  height: 5px;
-}
-
-#routes-container::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-#routes-container::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 20px;
-}
-
-/* Route cards styling */
-.route-card {
-  min-width: 180px;
-  max-width: 220px;
-  flex: 0 0 auto;
-  background: white;
-  padding: 12px;
-  border-radius: 10px;
-  box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
-  border-top: 1px solid rgba(255, 255, 255, 0.9);
-  border-left: 1px solid rgba(255, 255, 255, 0.9);
-  position: relative;
-  overflow: visible;
-}
-
-.route-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background: linear-gradient(90deg, #3498db, #2980b9);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.route-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.12);
-}
-
-.route-card:hover::before {
-  opacity: 1;
-}
-
-.route-card h4 {
-  font-size: 1em;
-  margin-bottom: 8px;
-  color: #2c3e50;
-  position: relative;
-  padding-bottom: 5px;
-}
-
-.route-card h4::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 35px;
-  height: 2px;
-  background: linear-gradient(90deg, #3498db, #2980b9);
-  border-radius: 10px;
-}
-
-.route-card p {
-  margin-bottom: 6px;
-  font-size: 0.85em;
-  color: #666;
-}
-
-.route-card p strong {
-  color: #333;
-}
-
-/* Safest route styling */
-.route-card.safest {
-  background: linear-gradient(135deg, #f0f9ff, #e1f5fe);
-  border-left: 4px solid #3498db;
-  z-index: 2;
-}
-
-/* Safest route badge */
-.safest-badge,
-.route-card.safest p em {
-  color: white !important;
-  font-weight: bold !important;
-  display: inline-block !important;
-  padding: 3px 8px !important;
-  background: #3498db !important;
-  border-radius: 20px !important;
-  font-size: 0.8em !important;
-  margin-top: 4px !important;
-  margin-bottom: 2px !important;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  z-index: 5 !important;
-}
-
-/* Make parent of badge visible */
-.route-card.safest p:has(em),
-.route-card p:has(.safest-badge) {
-  display: block !important;
-  margin-top: 5px !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-/* Selected route styling */
-.route-card.selected {
-  background: linear-gradient(135deg, #e1f5fe, #e8f4f8);
-  border-left: 4px solid #3498db;
-  transform: translateY(-4px);
-}
-
-/* Ripple effect for buttons */
-.ripple-effect {
-  position: relative;
-  overflow: hidden;
-}
-
-.ripple {
-  position: absolute;
-  background: rgba(255, 255, 255, 0.4);
-  border-radius: 50%;
-  transform: scale(0);
-  animation: ripple-animation 0.6s linear;
-  pointer-events: none;
-}
-
-@keyframes ripple-animation {
-  to {
-    transform: scale(2);
-    opacity: 0;
-  }
-}
-
-/* Navigation backdrop overlay */
-.nav-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 999;
-  display: none;
-}
-
-/* Media queries for responsive design */
-@media (max-width: 1200px) {
-  #routes-container {
-    width: calc(100% - 280px);
-  }
-}
-
-@media (max-width: 992px) {
-  nav {
-    width: 240px;
+/* Base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', 'Segoe UI', Roboto, sans-serif;
   }
   
-  #routes-container {
-    width: calc(100% - 260px);
+  body {
+    overflow: hidden;
+    color: #333;
+    background-color: #f8faf8;
   }
   
-  .route-card {
-    min-width: 170px;
-  }
-}
-
-@media (max-width: 768px) {
-  nav {
-    transform: translateX(100%);
-    width: 75%;
-    max-width: 260px;
-  }
-  
-  nav.active {
-    transform: translateX(0);
-  }
-  
-  .nav-toggle {
-    display: flex;
+  /* SRX Logo in top right corner */
+.srx-logo {
+    position: fixed;
+    top: 20px;
+    right: 70px; /* Increased to avoid map controls */
+    width: 100px;
+    height: 40px;
+    z-index: 900;
+    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.2));
+    transition: all 0.3s ease;
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 5px;
+    border-radius: 8px;
   }
   
-  #routes-container {
-    width: calc(100% - 40px);
+  .srx-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  
+ 
+  
+  /* Set Location Button - now in top left */
+  .set-location-container {
+    position: fixed;
+    top: 20px;
     left: 20px;
-    bottom: 75px;
-    padding: 12px;
+    z-index: 900;
   }
   
-  .mobile-nav, .fab {
+  .set-location-btn {
     display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
   }
   
-  .safest-route-display {
-    top: 75px;
+  .set-location-btn:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
   }
   
-  #nav-info {
-    top: 75px;
-    max-width: 280px;
+  .set-location-btn i {
+    margin-right: 8px;
+    font-size: 1.1em;
   }
   
-  /* Mobile-specific badge styling */
-  .safest-badge,
-  .route-card.safest p em {
-    padding: 3px 10px !important;
-    font-size: 0.75em !important;
-    margin-top: 5px !important;
-  }
-  
-  /* Ensure route cards don't hide content on mobile */
-  .route-card {
-    max-height: none;
-    padding-bottom: 30px;
-  }
-}
-
-@media (max-width: 576px) {
-  .route-card {
-    min-width: 160px;
-    padding: 10px;
-  }
-  
-  .modal-content {
-    padding: 20px;
-    width: 95%;
-  }
-  
-  .safest-route-display {
-    left: 20px;
+  /* Map controls - right side circle buttons */
+  .map-controls {
+    position: fixed;
     right: 20px;
-    width: calc(100% - 40px);
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    z-index: 900;
+  }
+  
+  .control-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #555;
+    font-size: 1.2em;
+  }
+  
+  .control-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+  }
+  
+  #start-nav {
+    background: #4CAF50;
+    color: white;
+  }
+  
+  #stop-nav {
+    background: #f44336;
+    color: white;
+  }
+  
+  #enable-alerts {
+    background: #FFC107;
+    color: #333;
+  }
+  
+  /* Fullscreen Map */
+  #map {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
+  }
+  
+  /* Route title display */
+  .safest-route-display {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 25px;
+    padding: 10px 20px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    z-index: 850;
+    color: #2c3e50;
+    text-align: center;
+    max-width: 90%;
+  }
+  
+  .safest-route-display h3 {
+    font-size: 1em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* Navigation info panel */
+  #nav-info {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 90%;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 10px 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    z-index: 850;
+    display: none;
+    color: #2c3e50;
     text-align: center;
   }
   
-  #nav-info {
-    left: 20px;
-    max-width: calc(100% - 40px);
+  /* REDESIGNED Routes Container - now full width */
+  #routes-container {
+    position: fixed;
+    bottom: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 1200px;
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-radius: 15px;
+    box-shadow: 0px 8px 25px rgba(0, 0, 0, 0.15);
+    z-index: 900;
+    transition: all 0.3s ease;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+    max-height: 150px;
+  }
+  
+  #routes-container::-webkit-scrollbar {
+    height: 6px;
+  }
+  
+  #routes-container::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  #routes-container::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+  }
+  
+  /* REDESIGNED Modern Route Cards with Better Contrast */
+  .route-card {
+    min-width: 200px;
+    max-width: 250px;
+    flex: 0 0 auto;
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    border-top: 1px solid rgba(255, 255, 255, 0.9);
+    border-left: 1px solid rgba(255, 255, 255, 0.9);
+    position: relative;
+    overflow: visible !important;
+  }
+  
+  .route-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #3498db, #2980b9);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: 12px 12px 0 0;
+  }
+  
+  .route-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.12);
+  }
+  
+  .route-card:hover::before {
+    opacity: 1;
   }
   
   .route-card h4 {
-    font-size: 0.95em;
+    font-size: 1.1em;
+    margin-bottom: 10px;
+    color: #2c3e50;
+    position: relative;
+    padding-bottom: 5px;
+  }
+  
+  .route-card h4::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 40px;
+    height: 3px;
+    background: linear-gradient(90deg, #3498db, #2980b9);
+    border-radius: 10px;
   }
   
   .route-card p {
-    font-size: 0.8em;
-  }
-}
-
-/* Extra small devices */
-@media (max-width: 374px) {
-  .mobile-nav-btn i {
-    font-size: 20px;
-    margin-bottom: 2px;
+    margin-bottom: 8px;
+    font-size: 0.9em;
+    color: #666;
   }
   
-  .mobile-nav-btn span {
-    font-size: 9px;
+  .route-card p strong {
+    color: #333;
   }
   
-  .mobile-nav {
-    height: 60px;
+  /* Improved safest route highlighting */
+  .route-card.safest {
+    background: linear-gradient(135deg, #f0f9ff, #e1f5fe);
+    border-left: 4px solid #3498db;
+    z-index: 2;
   }
   
-  .route-card {
-    min-width: 150px;
+  /* Enhanced styling for safest route badge */
+  .safest-badge,
+  .route-card.safest p em {
+    color: white !important;
+    font-weight: bold !important;
+    display: inline-block !important;
+    padding: 3px 10px !important;
+    background: #3498db !important;
+    border-radius: 20px !important;
+    font-size: 0.8em !important;
+    margin-top: 4px !important;
+    margin-bottom: 2px !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 5 !important;
   }
-}
+  
+  /* Always make the parent paragraph visible */
+  .route-card.safest p:has(em),
+  .route-card p:has(.safest-badge) {
+    display: block !important;
+    margin-top: 5px !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  /* Selected route */
+  .route-card.selected {
+    background: linear-gradient(135deg, #e1f5fe, #e8f4f8);
+    border-left: 4px solid #3498db;
+    transform: translateY(-4px);
+  }
+  
+  .route-card.selected::before {
+    opacity: 1;
+  }
+  
+  /* Safety notification */
+  #notification {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: linear-gradient(45deg, #ff4e50, #f9d423);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 10px;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    font-size: 1.2em;
+    font-weight: bold;
+    display: none;
+    z-index: 1000;
+    max-width: 80%;
+  }
+  
+  /* Mobile Set Route button */
+  .mobile-set-route {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    max-width: 300px;
+    z-index: 950;
+  }
+  
+  .mobile-set-route button {
+    width: 100%;
+    padding: 12px 0;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 30px;
+    font-size: 1em;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  }
+  
+  .mobile-set-route button i {
+    margin-right: 8px;
+    font-size: 1.1em;
+  }
+  
+  /* Modal styling improvements */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1100;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .modal-content {
+    background: white;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+    padding: 25px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    transform: scale(0.9);
+    transition: all 0.3s ease;
+    position: relative;
+  }
+  
+  .modal.active .modal-content {
+    transform: scale(1);
+  }
+  
+  .close-btn {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+    transition: color 0.2s;
+  }
+  
+  .close-btn:hover {
+    color: #3498db;
+  }
+  
+  .modal h2 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    font-weight: 700;
+    font-size: 1.5em;
+    text-align: center;
+  }
+  
+  .input-group {
+    margin-bottom: 20px;
+  }
+  
+  .input-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #2c3e50;
+  }
+  
+  .input-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 1em;
+    transition: all 0.3s;
+  }
+  
+  .input-group input:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+    outline: none;
+  }
+  
+  .modal .btn {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    font-size: 1em;
+    transition: all 0.3s;
+    margin-top: 10px;
+  }
+  
+  .modal .btn:hover {
+    background: linear-gradient(135deg, #2980b9, #2573a7);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Use Current Location button */
+  #use-current-location {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f5f9fc;
+    color: #3498db;
+    border: 1px solid #3498db;
+    border-radius: 10px;
+    padding: 10px;
+    width: 100%;
+    margin-top: 10px;
+    margin-bottom: 15px;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  #use-current-location:hover {
+    background-color: #e8f4fb;
+    transform: translateY(-2px);
+  }
+  
+  #use-current-location i {
+    margin-right: 8px;
+  }
+  
+  /* Loading indicator */
+  .loading-indicator {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(5px);
+    border-radius: 10px;
+    padding: 15px 25px;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .loading-indicator i {
+    color: #3498db;
+  }
+  
+  /* Toast message */
+  .toast-message {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-size: 0.9em;
+    z-index: 1100;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  /* Media queries for responsive design */
+  @media (max-width: 768px) {
+    .srx-logo {
+      top: 15px;
+      right: 15px;
+      width: 80px;
+      height: 32px;
+    }
+    
+    .set-location-container {
+      display: none;
+    }
+    
+    .mobile-set-route {
+      display: block;
+    }
+    
+    .map-controls {
+      bottom: 100px;
+      top: auto;
+      right: 20px;
+      transform: none;
+      flex-direction: row;
+    }
+    
+    #routes-container {
+      bottom: 80px;
+    }
+    
+    .safest-route-display {
+      top: 15px;
+      max-width: 70%;
+    }
+    
+    .safest-route-display h3 {
+      font-size: 0.9em;
+    }
+    
+    .route-card {
+      min-width: 180px;
+      padding: 12px;
+    }
+    
+    .route-card h4 {
+      font-size: 1em;
+    }
+    
+    #notification {
+      font-size: 1em;
+      padding: 12px 20px;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .map-controls {
+      right: 10px;
+      gap: 10px;
+    }
+    
+    .control-btn {
+      width: 45px;
+      height: 45px;
+      font-size: 1em;
+    }
+    
+    .route-card {
+      min-width: 160px;
+    }
+    
+    .mobile-set-route {
+      width: 90%;
+    }
+  }
