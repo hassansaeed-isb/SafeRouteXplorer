@@ -26,8 +26,8 @@ HARDCODED_INCIDENTS = [
     {"name": "Flooding", "area": "Murree Road, Rawalpindi", "severity": 4, "lat": 33.6312, "lng": 73.0657},
     #{"name": "Accident", "area": "F-10, Islamabad", "severity": 2, "lat": 33.7047, "lng": 73.0456},
    # {"name": "Demo Incident 2", "area": "Demo Zone 1", "severity": 3, "lat": 33.7000, "lng": 73.0500},
-    {"name": "Demo Incident 2", "area": "Demo Zone 2", "severity": 2, "lat": 33.7200, "lng": 73.0600},
-   {"name": "Demo Incident 1", "area": "Demo Zone 2", "severity": 2, "lat": 33.7300, "lng": 73.0650}, 
+    {"name": "Mugging", "area": "F-7", "severity": 2, "lat": 33.7200, "lng": 73.0600},
+   {"name": "Robbery", "area": "F-6/2", "severity": 2, "lat": 33.7300, "lng": 73.0650}, 
     
 
 ]
@@ -103,13 +103,25 @@ def get_route_data():
     if not ONLINE_MODE:
         return jsonify(get_offline_route_data())
 
-    try:
-        origin_lat = float(request.args.get("origin_lat"))
-        origin_lng = float(request.args.get("origin_lng"))
-        origin = (origin_lat, origin_lng)
-    except (TypeError, ValueError):
-        origin = "Rawalpindi"
-    
+  # 1. Get possible textual origin or lat/lng
+    origin_str = request.args.get("origin", None)
+    origin_lat_str = request.args.get("origin_lat", None)
+    origin_lng_str = request.args.get("origin_lng", None)
+
+    # 2. Decide which origin to use
+    if origin_str:
+        # If user provided a string like "Lahore", use that directly
+        origin = origin_str
+    else:
+        # Otherwise, try to parse lat/lng. If invalid, default to "Rawalpindi"
+        try:
+            origin_lat = float(origin_lat_str)
+            origin_lng = float(origin_lng_str)
+            origin = (origin_lat, origin_lng)
+        except (TypeError, ValueError):
+            origin = "Rawalpindi"
+
+    # 3. Destination is either user-provided or defaults to "Islamabad"
     destination = request.args.get("destination", "Islamabad")
 
     try:

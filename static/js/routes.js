@@ -32,12 +32,14 @@ function displayRoutes(routes) {
         // Create route card with enhanced styling
         const card = document.createElement('div');
         card.className = `route-card ${isSafest ? 'safest' : ''}`;
+        
     
         // Create card content
         let cardContent = `
-            <h4>Route ${originalIndex + 1}</h4>
-            <p><strong>Distance:</strong> ${route.distance || 'N/A'}</p>
-        `;
+        <h4>Route ${originalIndex + 1}</h4>
+        <p><strong>Distance:</strong> ${route.distance || 'N/A'}</p>
+    `;
+    
         
         // Add additional safety info for all routes
         cardContent += `<p><strong>Safety Score:</strong> ${route.safety_index}</p>`;

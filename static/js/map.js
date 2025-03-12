@@ -184,9 +184,16 @@ function initMap() {
     
     // Add custom map controls
     addCustomControls();
+
+    // Wait until the map is fully loaded before proceeding
+    google.maps.event.addListenerOnce(map, 'idle', () => {
+        console.log("Map is fully loaded and idle.");
+        // Optionally, trigger a default route fetch here if needed.
+    });
     
     return map;
 }
+
 
 // Add custom map controls
 function addCustomControls() {
@@ -361,33 +368,45 @@ function fetchRouteData(url) {
 
 // Get routes based on origin and destination with improved user experience
 function fetchRoutes(startLocation = "Rawalpindi", endLocation = "Islamabad") {
-    if (navigator.geolocation) {
-        return new Promise((resolve, reject) => {
-            showToast("Getting your location...");
-            
-            navigator.geolocation.getCurrentPosition(
-                pos => {
-                    const url = `/get_route_data?origin_lat=${pos.coords.latitude}&origin_lng=${pos.coords.longitude}&destination=${encodeURIComponent(endLocation)}`;
-                    fetchRouteData(url)
-                        .then(resolve)
-                        .catch(reject);
-                },
-                () => {
-                    showToast("Using default location instead.");
-                    const url = `/get_route_data?origin=${encodeURIComponent(startLocation)}&destination=${encodeURIComponent(endLocation)}`;
-                    fetchRouteData(url)
-                        .then(resolve)
-                        .catch(reject);
-                },
-                { timeout: 10000 }
-            );
-        });
-    } else {
-        showToast("Geolocation not available. Using default routes.");
-        const url = `/get_route_data?origin=${encodeURIComponent(startLocation)}&destination=${encodeURIComponent(endLocation)}`;
-        return fetchRouteData(url);
+    // If the user manually entered an origin address that is not "My Current Location",
+    // use that address directly.
+    if (
+      startLocation &&
+      startLocation.trim() !== "" &&
+      startLocation.toLowerCase() !== "my current location"
+    ) {
+      const url = `/get_route_data?origin=${encodeURIComponent(startLocation)}&destination=${encodeURIComponent(endLocation)}`;
+      return fetchRouteData(url);
     }
-}
+    
+    // Otherwise, if geolocation is available, use it.
+    if (navigator.geolocation) {
+      return new Promise((resolve, reject) => {
+        showToast("Getting your location...");
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            const url = `/get_route_data?origin_lat=${pos.coords.latitude}&origin_lng=${pos.coords.longitude}&destination=${encodeURIComponent(endLocation)}`;
+            fetchRouteData(url)
+              .then(resolve)
+              .catch(reject);
+          },
+          () => {
+            showToast("Using default location instead.");
+            const url = `/get_route_data?origin=${encodeURIComponent(startLocation)}&destination=${encodeURIComponent(endLocation)}`;
+            fetchRouteData(url)
+              .then(resolve)
+              .catch(reject);
+          },
+          { timeout: 10000 }
+        );
+      });
+    } else {
+      showToast("Geolocation not available. Using default routes.");
+      const url = `/get_route_data?origin=${encodeURIComponent(startLocation)}&destination=${encodeURIComponent(endLocation)}`;
+      return fetchRouteData(url);
+    }
+  }
+  
 
 // Get color based on danger index
 function getDangerColor(severity) {

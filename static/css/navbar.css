@@ -15,27 +15,36 @@
   }
   
   /* SRX Logo in top right corner */
-.srx-logo {
+  .srx-logo {
     position: fixed;
-    top: 20px;
-    right: 70px; /* Increased to avoid map controls */
+    top: 10px; /* Keeps it at the top */
+    left: 90%; /* Centers it horizontally */
+    transform: translateX(-50%); /* Ensures proper centering */
     width: 100px;
     height: 40px;
-    z-index: 900;
+    z-index: 901; /* Above map elements */
     filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.2));
     transition: all 0.3s ease;
     background-color: rgba(255, 255, 255, 0.7);
     padding: 5px;
     border-radius: 8px;
-  }
-  
-  .srx-logo img {
+}
+
+/* Logo Image Styling */
+.srx-logo img {
     width: 100%;
     height: 100%;
     object-fit: contain;
-  }
-  
- 
+}
+
+/* Mobile Optimization */
+@media (max-width: 768px) {
+    .srx-logo {
+        top: 15px; /* Adjusted spacing for smaller screens */
+        width: 90px; /* Slightly smaller for mobile */
+    }
+}
+
   
   /* Set Location Button - now in top left */
   .set-location-container {
@@ -75,7 +84,7 @@
   /* Map controls - right side circle buttons */
   .map-controls {
     position: fixed;
-    right: 20px;
+    right: 50px;
     top: 50%;
     transform: translateY(-50%);
     display: flex;
@@ -329,7 +338,7 @@
     position: fixed;
     top: 20px;
     left: 20px;
-    background: linear-gradient(45deg, #ff4e50, #f9d423);
+    background: linear-gradient(45deg, #e2baba, #f9d423);
     color: white;
     padding: 15px 25px;
     border-radius: 10px;

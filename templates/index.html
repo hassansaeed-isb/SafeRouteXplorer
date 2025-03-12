@@ -45,9 +45,7 @@
         <button id="stop-nav" class="control-btn" style="display:none;">
             <i class="fas fa-stop"></i>
         </button>
-        <button id="enable-alerts" class="control-btn">
-            <i class="fas fa-bell"></i>
-        </button>
+       
         <button id="simulate-movement" class="control-btn">
             <i class="fas fa-route"></i>
         </button>
@@ -86,13 +84,39 @@
             </form>
         </div>
     </div>
+    <script>
+        // This function is called by the Google Maps API
+        function initMap() {
+    const mapOptions = {
+        center: { lat: 33.6844, lng: 73.0479 },
+        zoom: 12,
+        styles: mapStyle,
+        // ... other options
+    };
+    
+    map = new google.maps.Map(document.getElementById("map"), mapOptions);
+    directionsService = new google.maps.DirectionsService();
+    
+    // Add custom controls
+    addCustomControls();
 
+    // OPTIONAL: Wait until the map is idle before enabling route actions
+    google.maps.event.addListenerOnce(map, 'idle', () => {
+        console.log("Map is fully loaded and idle.");
+        // If you wish, you can trigger a default route fetch here.
+    });
+    
+    return map;
+}
+
+      </script>
+      
     <!-- Load Google Maps API -->
     <script src="https://maps.googleapis.com/maps/api/js?key={{ api_key }}&callback=initApp" async defer></script>
     
     <!-- Load application scripts -->
     <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/notification.js') }}"></script>
     <script src="{{ url_for('static', filename='js/map.js') }}"></script>
     <script src="{{ url_for('static', filename='js/routes.js') }}"></script>
     <script src="{{ url_for('static', filename='js/navigation.js') }}"></script>
