@@ -39,7 +39,7 @@ class Incident:
     category: LocationCategory = LocationCategory.OTHER
 
 class RouteSafetyCalculator:
-    """Calculator for determining the safety of routes based on incident data"""
+    """Calculator for determining the safety of routes based on incident"""
 
     EARTH_RADIUS_KM = 6371  # Earth's radius in kilometers
     MAX_CACHE_SIZE = 1000   # Maximum size for LRU cache
