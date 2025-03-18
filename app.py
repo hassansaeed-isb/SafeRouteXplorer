@@ -210,7 +210,7 @@ def get_route_data():
 
     except Exception as e:
         print(f"Error in get_route_data: {str(e)}")
-        return jsonify({"routes ": [], "danger_points ": incident_data})
+        return jsonify({"routes": [], "danger_points": incident_data})
 
 if __name__ == "__main__":
     app.run(debug=True)
