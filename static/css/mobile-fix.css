@@ -1,0 +1,129 @@
+/* Mobile Navigation CSS Fixes */
+
+/* Fix for mobile "Set Route" button */
+.mobile-set-route {
+    display: none;
+    position: fixed;
+    bottom: 25px !important;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    max-width: 300px;
+    z-index: 1000 !important; /* Increased z-index to ensure it's clickable */
+    pointer-events: auto !important;
+}
+
+.mobile-set-route button {
+    width: 100%;
+    padding: 15px 0 !important; /* Increased padding for better tap target */
+    min-height: 50px; /* Minimum height for better clickability */
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 30px;
+    font-size: 16px !important; /* Larger font for better visibility */
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease !important;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent; /* Remove default mobile highlight */
+}
+
+/* Visible active state for touch feedback */
+.mobile-set-route button:active,
+.mobile-set-route button.button-active {
+    transform: scale(0.95);
+    background: #2980b9;
+}
+
+/* Fix for mobile bottom navigation */
+.mobile-nav {
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    z-index: 999 !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    pointer-events: auto !important;
+}
+
+/* Modal enhancements for mobile */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        padding: 20px 15px 30px 15px !important;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    .close-btn {
+        top: 10px;
+        right: 15px;
+        font-size: 30px !important;
+        padding: 10px !important;
+        z-index: 10;
+    }
+    
+    .input-group input {
+        padding: 15px !important;
+        font-size: 16px !important; /* Prevent iOS zoom on focus */
+    }
+    
+    .modal .btn {
+        padding: 15px !important;
+        margin-top: 20px;
+    }
+    
+    /* Fix for route cards container in mobile view */
+    #routes-container {
+        bottom: 80px !important;
+        padding: 10px !important;
+    }
+    
+    /* Fix for map controls in mobile view */
+    .map-controls {
+        bottom: 110px !important;
+        right: 15px !important;
+    }
+}
+
+/* Fix for iOS touch issues */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Additional fixes for iOS */
+input,
+button,
+.close-btn,
+.modal-content,
+.mobile-set-route button {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* Fix for overlapping elements that might intercept clicks */
+.nav-backdrop {
+    z-index: 998 !important;
+}
+
+/* Lower z-index for elements that might be intercepting clicks */
+#routes-container {
+    z-index: 900 !important;
+}
+
+#map {
+    z-index: 1 !important;
+}
