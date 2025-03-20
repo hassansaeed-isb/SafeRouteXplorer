@@ -24,10 +24,9 @@ HARDCODED_INCIDENTS = [
     {"name": "Street Fight", "area": "Rawalpindi Committee Chowk", "severity": 2, "lat": 33.6124, "lng": 73.0728},
     {"name": "Mugging", "area": "Rawalpindi Banni", "severity": 2, "lat": 33.5970, "lng": 73.0417},
     {"name": "Flooding", "area": "Murree Road, Rawalpindi", "severity": 4, "lat": 33.6312, "lng": 73.0657},
-    #{"name": "Accident", "area": "F-10, Islamabad", "severity": 2, "lat": 33.7047, "lng": 73.0456},
-   # {"name": "Demo Incident 2", "area": "Demo Zone 1", "severity": 3, "lat": 33.7000, "lng": 73.0500},
+    {"name": "Accident", "area": "F-10, Islamabad", "severity": 2, "lat": 33.7047, "lng": 73.0456}, 
     {"name": "Mugging", "area": "F-7", "severity": 2, "lat": 33.7200, "lng": 73.0600},
-   {"name": "Robbery", "area": "F-6/2", "severity": 2, "lat": 33.7300, "lng": 73.0650}, 
+    {"name": "Robbery", "area": "F-6/2", "severity": 2, "lat": 33.7300, "lng": 73.0650}, 
     
 
 ]
