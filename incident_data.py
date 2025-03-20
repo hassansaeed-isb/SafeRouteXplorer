@@ -17,14 +17,14 @@ CATEGORY_MULTIPLIERS = {
 
 # Shared hardcoded incidents with serializable values
 HARDCODED_INCIDENTS = [
-    {"name": "Car Accident", "area": "F-8, Islamabad", "severity": SEVERITY_HIGH, "lat": 33.6844, "lng": 73.0479, "category": "COMMERCIAL"},
-    {"name": "Robbery", "area": "G-9, Islamabad", "severity": SEVERITY_MEDIUM, "lat": 33.6846, "lng": 73.0586, "category": "RESIDENTIAL"},
-    {"name": "Traffic Jam", "area": "Rawalpindi Saddar", "severity": SEVERITY_LOW, "lat": 33.5968, "lng": 73.0476, "category": "GOVERNMENT"},
-    {"name": "Street Fight", "area": "Rawalpindi Committee Chowk", "severity": SEVERITY_MEDIUM, "lat": 33.6124, "lng": 73.0728, "category": "COMMERCIAL"},
-    {"name": "Mugging", "area": "Rawalpindi Banni", "severity": SEVERITY_MEDIUM, "lat": 33.5970, "lng": 73.0417, "category": "RESIDENTIAL"},
-    {"name": "Flooding", "area": "Murree Road, Rawalpindi", "severity": SEVERITY_HIGH, "lat": 33.6312, "lng": 73.0657, "category": "OTHER"},
-    {"name": "Accident", "area": "F-10, Islamabad", "severity": SEVERITY_MEDIUM, "lat": 33.7047, "lng": 73.0456, "category": "HOSPITAL"},
-    {"name": "Pedestrian Hit", "area": "I-10, Islamabad", "severity": SEVERITY_HIGH, "lat": 33.7085, "lng": 73.0770, "category": "SCHOOL"},
-    {"name": "Mugging", "area": "F-7", "severity": SEVERITY_MEDIUM, "lat": 33.7200, "lng": 73.0600, "category": "RESIDENTIAL"},
-    {"name": "Robbery", "area": "F-6/2", "severity": SEVERITY_MEDIUM, "lat": 33.7300, "lng": 73.0650, "category": "RESIDENTIAL"}
+    {"name": "Traffic Jam", "area": "Commercial Market", "severity": SEVERITY_LOW, "lat": 33.5968, "lng": 73.0476, "category": "GOVERNMENT"},
+    {"name": "Street Fight", "area": "Chaklala Road", "severity": SEVERITY_MEDIUM, "lat": 33.6124, "lng": 73.0728, "category": "COMMERCIAL"},
+    {"name": "Mugging", "area": "Abdul Majeed Road", "severity": SEVERITY_MEDIUM, "lat": 33.5970, "lng": 73.0417, "category": "RESIDENTIAL"},
+    {"name": "Flooding", "area": "Muslim School Road", "severity": SEVERITY_HIGH, "lat": 33.6312, "lng": 73.0657, "category": "OTHER"},
+    {"name": "Accident", "area": "Jinnah Aveneue", "severity": SEVERITY_MEDIUM, "lat": 33.7047, "lng": 73.0456, "category": "HOSPITAL"},
+    {"name": "Mugged", "area": "F-7", "severity": SEVERITY_MEDIUM, "lat": 33.7200, "lng": 73.0600, "category": "RESIDENTIAL"},
+    {"name": "Robbery", "area": "F-6/2", "severity": SEVERITY_MEDIUM, "lat": 33.7300, "lng": 73.0650, "category": "RESIDENTIAL"},
+    {"name": "Robbery", "area": "I-10/2", "severity": SEVERITY_MEDIUM, "lat": 33.65032492180146, "lng": 73.03389245251276, "category": "RESIDENTIAL"},
+    {"name": "Theft", "area": "Qasim Market", "severity": SEVERITY_MEDIUM, "lat": 33.60054489248755,  "lng": 73.03350467492095, "category": "RESIDENTIAL"},
+    {"name": "Blockade", "area": "Jinnah Market", "severity": SEVERITY_MEDIUM, "lat": 33.590350151543284, "lng": 73.06984298188172 ,"category": "RESIDENTIAL"},
 ]
