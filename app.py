@@ -4,6 +4,8 @@ from flask import Flask, request, jsonify, render_template
 import googlemaps
 import math
 from dotenv import load_dotenv
+from incident_data import HARDCODED_INCIDENTS, CATEGORY_MULTIPLIERS
+from enum import Enum
 from route_safety_calculator import RouteSafetyCalculator
 from offline_mode import OfflineMode
 
@@ -16,20 +18,14 @@ gmaps_api_key = os.getenv("GOOGLE_MAPS_API_KEY")
 gmaps = googlemaps.Client(key=gmaps_api_key)
 csv_file_path = os.getenv("CSV_FILE_PATH")
 
-# HARDCODED_INCIDENTS includes demo incidents
-HARDCODED_INCIDENTS = [
-    {"name": "Car Accident", "area": "F-8, Islamabad", "severity": 3, "lat": 33.6844, "lng": 73.0479},
-    {"name": "Robbery", "area": "G-9, Islamabad", "severity": 2, "lat": 33.6846, "lng": 73.0586},
-    {"name": "Traffic Jam", "area": "Rawalpindi Saddar", "severity": 1, "lat": 33.5968, "lng": 73.0476},
-    {"name": "Street Fight", "area": "Rawalpindi Committee Chowk", "severity": 2, "lat": 33.6124, "lng": 73.0728},
-    {"name": "Mugging", "area": "Rawalpindi Banni", "severity": 2, "lat": 33.5970, "lng": 73.0417},
-    {"name": "Flooding", "area": "Murree Road, Rawalpindi", "severity": 4, "lat": 33.6312, "lng": 73.0657},
-    #{"name": "Accident", "area": "F-10, Islamabad", "severity": 2, "lat": 33.7047, "lng": 73.0456},
-   # {"name": "Demo Incident 2", "area": "Demo Zone 1", "severity": 3, "lat": 33.7000, "lng": 73.0500},
-    {"name": "Mugging", "area": "F-7", "severity": 2, "lat": 33.7200, "lng": 73.0600},
-   {"name": "Robbery", "area": "F-6/2", "severity": 2, "lat": 33.7300, "lng": 73.0650}, 
-    
-
+FLASK_INCIDENTS = [
+    {
+        "name": inc["name"], 
+        "area": inc["area"], 
+        "severity": inc["severity"],  # Already an integer, no need for .value
+        "lat": inc["lat"], 
+        "lng": inc["lng"]
+    } for inc in HARDCODED_INCIDENTS
 ]
 
 
@@ -45,7 +41,7 @@ except Exception as e:
 # Load incident data
 if safety_calculator:
     try:
-        incident_data = safety_calculator.incident_locations
+        incident_data = FLASK_INCIDENTS
         print(f"Loaded {len(incident_data)} incidents.")
     except Exception as e:
         print(f"Error loading incident data: {str(e)}")
@@ -82,7 +78,7 @@ def index():
                 return render_template("index.html", api_key=gmaps_api_key)
         except Exception as e:
             print(f"API key validation error: {str(e)}")
-    return render_template("offline_vector_map.html", incident_data=HARDCODED_INCIDENTS)
+    return render_template("offline_vector_map.html", incident_data=FLASK_INCIDENTS)
 
 def get_offline_route_data():
     return {

@@ -8,6 +8,8 @@ from enum import Enum
 from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass
 from functools import lru_cache
+from incident_data import HARDCODED_INCIDENTS, CATEGORY_MULTIPLIERS
+
 
 # Configure logging
 logging.basicConfig(level=logging.CRITICAL)
@@ -69,43 +71,48 @@ class RouteSafetyCalculator:
 
     def _load_incident_data(self) -> List[Incident]:
         """
-        Load and parse incident data from CSV file and hardcoded locations
+        Load and parse incident data from shared constant
         
         Returns:
             List[Incident]: List of incident objects
         """
         incidents = []
         
-        # Add hardcoded known incidents with categories
-        hardcoded_incidents = [
-            Incident("Car Accident", "F-8, Islamabad", Severity.HIGH, 33.6844, 73.0479, LocationCategory.COMMERCIAL),
-            Incident("Robbery", "G-9, Islamabad", Severity.MEDIUM, 33.6846, 73.0586, LocationCategory.RESIDENTIAL),
-            Incident("Pedestrian Hit", "I-10, Islamabad", Severity.HIGH, 33.7085, 73.0770, LocationCategory.SCHOOL),
-            Incident("Traffic Jam", "Rawalpindi Saddar", Severity.LOW, 33.5968, 73.0476, LocationCategory.GOVERNMENT),
-            Incident("Street Fight", "Rawalpindi Committee Chowk", Severity.MEDIUM, 33.6124, 73.0728, LocationCategory.COMMERCIAL),
-            Incident("Mugging", "Rawalpindi Banni", Severity.MEDIUM, 33.5970, 73.0417, LocationCategory.RESIDENTIAL),
-            Incident("Accident", "F-10, Islamabad", Severity.MEDIUM, 33.7047, 73.0456, LocationCategory.HOSPITAL)
-        ]
-        incidents.extend(hardcoded_incidents)
+        # Map severity value to enum
+        severity_map = {
+            1: Severity.LOW,
+            2: Severity.MEDIUM,
+            3: Severity.HIGH
+        }
         
-        # CSV parsing code - commented out
-        # try:
-        #     with open(self.csv_file_path, mode='r', encoding='utf-8') as file:
-        #         reader = csv.DictReader(file)
-        #         for row in reader:
-        #             incident = self._parse_incident_row(row)
-        #             if incident:
-        #                 incidents.append(incident)
-        #                 
-        # except csv.Error as e:
-        #     logger.error(f"Error reading CSV file: {str(e)}")
-        #     raise ValueError(f"Invalid CSV data: {str(e)}")
+        # Map category string to enum
+        category_map = {
+            "RESIDENTIAL": LocationCategory.RESIDENTIAL,
+            "COMMERCIAL": LocationCategory.COMMERCIAL,
+            "SCHOOL": LocationCategory.SCHOOL,
+            "HOSPITAL": LocationCategory.HOSPITAL,
+            "GOVERNMENT": LocationCategory.GOVERNMENT,
+            "OTHER": LocationCategory.OTHER
+        }
+        
+        # Convert dictionary format to Incident objects
+        for inc in HARDCODED_INCIDENTS:
+            sev = severity_map.get(inc["severity"], Severity.LOW)
+            cat = category_map.get(inc["category"], LocationCategory.OTHER)
+            
+            incidents.append(Incident(
+                name=inc["name"],
+                area=inc["area"],
+                severity=sev,
+                lat=inc["lat"],
+                lng=inc["lng"],
+                category=cat
+            ))
             
         if not incidents:
             raise ValueError("No valid incidents found in data")
             
         return incidents
-
     # CSV-related method - commented out
     # def _parse_incident_row(self, row: Dict) -> Optional[Incident]:
     #     """
