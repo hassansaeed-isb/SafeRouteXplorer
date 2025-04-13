@@ -114,8 +114,10 @@
 
       </script>
       
-    <!-- Load Google Maps API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ api_key }}&callback=initApp" async defer></script>
+    
+    <!-- Update the Google Maps API script to include the Places library -->
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ api_key }}&libraries=places&callback=initApp" async defer></script>
+
     
     <!-- Load application scripts -->
     <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
@@ -127,6 +129,7 @@
     <script src="{{ url_for('static', filename='js/navbar.js') }}"></script>
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
     <script src="{{ url_for('static', filename='js/mobile-fix.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/autocomplete.js') }}"></script>
 <!-- 
     <script>
         if ('serviceWorker' in navigator) {
