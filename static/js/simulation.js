@@ -17,47 +17,78 @@ let simulationInterval = null;
 function simulateMovement() {
     if (simulationInterval) return;
     
-    simulationIndex = 0;
-    resetNotifications();
+    try {
+        simulationIndex = 0;
+        
+        if (typeof resetNotifications === 'function') {
+            resetNotifications();
+        }
 
-    simulationInterval = setInterval(() => {
-        if (simulationIndex >= simulatedPath.length) {
+        simulationInterval = setInterval(() => {
+            try {
+                if (simulationIndex >= simulatedPath.length) {
+                    clearInterval(simulationInterval);
+                    simulationInterval = null;
+                    return;
+                }
+
+                const pos = simulatedPath[simulationIndex];
+                const newPos = new google.maps.LatLng(pos.lat, pos.lng);
+                
+                if (!userMarker) {
+                    userMarker = new google.maps.Marker({
+                        position: newPos,
+                        map: map,
+                        icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+                        title: "You (Simulated)"
+                    });
+                } else {
+                    userMarker.setPosition(newPos);
+                }
+                
+                map.setCenter(newPos);
+                
+                if (typeof updateNavInfo === 'function') {
+                    updateNavInfo(newPos);
+                }
+                
+                if (typeof checkNearbyCrimes === 'function') {
+                    checkNearbyCrimes(newPos);
+                }
+                
+                simulationIndex++;
+            } catch (intervalError) {
+                console.error('Simulation error:', intervalError);
+                stopSimulation();
+            }
+        }, 2000);
+    } catch (error) {
+        console.error('Failed to start simulation:', error);
+        if (simulationInterval) {
             clearInterval(simulationInterval);
             simulationInterval = null;
-            return;
         }
-
-        const pos = simulatedPath[simulationIndex];
-        const newPos = new google.maps.LatLng(pos.lat, pos.lng);
-        
-        if (!userMarker) {
-            userMarker = new google.maps.Marker({
-                position: newPos,
-                map: map,
-                icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-                title: "You (Simulated)"
-            });
-        } else {
-            userMarker.setPosition(newPos);
-        }
-        
-        map.setCenter(newPos);
-        updateNavInfo(newPos);
-        checkNearbyCrimes(newPos);
-        
-        simulationIndex++;
-    }, 2000);
+    }
 }
 
 // Stop the simulation
 function stopSimulation() {
-    if (simulationInterval) {
-        clearInterval(simulationInterval);
+    try {
+        if (simulationInterval) {
+            clearInterval(simulationInterval);
+            simulationInterval = null;
+        }
+        
+        if (userMarker) {
+            userMarker.setMap(null);
+            userMarker = null;
+        }
+    } catch (error) {
+        console.error('Error stopping simulation:', error);
+        // Force cleanup
         simulationInterval = null;
-    }
-    
-    if (userMarker) {
-        userMarker.setMap(null);
-        userMarker = null;
+        if (userMarker) {
+            userMarker = null;
+        }
     }
 }

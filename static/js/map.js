@@ -1,6 +1,7 @@
 /**
  * Enhanced Map functionality for SafeRouteXplorer
  * Includes custom styling for better visibility with map backgrounds
+ * Enhanced with essential exception handling
  */
 
 let map, directionsService;
@@ -162,38 +163,47 @@ const mapStyle = [
 
 // Initialize Google Maps with custom styling
 function initMap() {
-    const mapOptions = {
-        center: { lat: 33.6844, lng: 73.0479 },
-        zoom: 12,
-        styles: mapStyle,
-        mapTypeControl: true,
-        mapTypeControlOptions: {
-            style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
-            position: google.maps.ControlPosition.TOP_RIGHT
-        },
-        zoomControl: true,
-        zoomControlOptions: {
-            position: google.maps.ControlPosition.RIGHT_CENTER
-        },
-        streetViewControl: false,
-        fullscreenControl: false
-    };
-    
-    map = new google.maps.Map(document.getElementById("map"), mapOptions);
-    directionsService = new google.maps.DirectionsService();
-    
-    // Add custom map controls
-    addCustomControls();
+    try {
+        // Check if Google Maps API is loaded
+        if (typeof google === 'undefined' || !google.maps) {
+            throw new Error('Google Maps API is not loaded');
+        }
 
-    // Wait until the map is fully loaded before proceeding
-    google.maps.event.addListenerOnce(map, 'idle', () => {
-        console.log("Map is fully loaded and idle.");
-        // Optionally, trigger a default route fetch here if needed.
-    });
-    
-    return map;
+        const mapOptions = {
+            center: { lat: 33.6844, lng: 73.0479 },
+            zoom: 12,
+            styles: mapStyle,
+            mapTypeControl: true,
+            mapTypeControlOptions: {
+                style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
+                position: google.maps.ControlPosition.TOP_RIGHT
+            },
+            zoomControl: true,
+            zoomControlOptions: {
+                position: google.maps.ControlPosition.RIGHT_CENTER
+            },
+            streetViewControl: false,
+            fullscreenControl: false
+        };
+        
+        map = new google.maps.Map(document.getElementById("map"), mapOptions);
+        directionsService = new google.maps.DirectionsService();
+        
+        // Add custom map controls
+        addCustomControls();
+
+        // Wait until the map is fully loaded before proceeding
+        google.maps.event.addListenerOnce(map, 'idle', () => {
+            console.log("Map is fully loaded and idle.");
+        });
+        
+        return map;
+    } catch (error) {
+        console.error("Error initializing map:", error);
+        showToast("Failed to load map. Please refresh the page.");
+        throw error;
+    }
 }
-
 
 // Add custom map controls
 function addCustomControls() {
@@ -233,15 +243,32 @@ function addCustomControls() {
                     });
                     
                     setTimeout(() => {
-                        myLocMarker.setMap(null);
+                        if (myLocMarker) {
+                            myLocMarker.setMap(null);
+                        }
                     }, 5000);
                 },
-                () => {
-                    alert("Could not get your location. Please check your browser settings.");
+                (error) => {
+                    let message = "Could not get your location. ";
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            message += "Please allow location access.";
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            message += "Location information is unavailable.";
+                            break;
+                        case error.TIMEOUT:
+                            message += "Location request timed out.";
+                            break;
+                        default:
+                            message += "Please check your browser settings.";
+                            break;
+                    }
+                    showToast(message);
                 }
             );
         } else {
-            alert("Geolocation is not supported by this browser.");
+            showToast("Geolocation is not supported by this browser.");
         }
     });
     controlsDiv.appendChild(locationBtn);
@@ -256,17 +283,22 @@ function addCustomControls() {
     let trafficEnabled = false;
     
     trafficBtn.addEventListener('click', () => {
-        if (!trafficEnabled) {
-            trafficLayer = new google.maps.TrafficLayer();
-            trafficLayer.setMap(map);
-            trafficBtn.style.backgroundColor = '#3498db';
-            trafficBtn.style.color = 'white';
-            trafficEnabled = true;
-        } else {
-            trafficLayer.setMap(null);
-            trafficBtn.style.backgroundColor = '';
-            trafficBtn.style.color = '';
-            trafficEnabled = false;
+        try {
+            if (!trafficEnabled) {
+                trafficLayer = new google.maps.TrafficLayer();
+                trafficLayer.setMap(map);
+                trafficBtn.style.backgroundColor = '#3498db';
+                trafficBtn.style.color = 'white';
+                trafficEnabled = true;
+            } else {
+                trafficLayer.setMap(null);
+                trafficBtn.style.backgroundColor = '';
+                trafficBtn.style.color = '';
+                trafficEnabled = false;
+            }
+        } catch (error) {
+            console.error("Error toggling traffic layer:", error);
+            showToast("Error toggling traffic information");
         }
     });
     controlsDiv.appendChild(trafficBtn);
@@ -277,45 +309,60 @@ function addCustomControls() {
 
 // Display danger points on the map with better styling
 function displayDangerPoints() {
-    dangerPointsData.forEach(point => {
-        // Create custom info window content
-        const contentString = `
-            <div class="info-window">
-                <h3>${point.name}</h3>
-                <p><strong>Area:</strong> ${point.area}</p>
-                <p><strong>Safety:</strong> 
-                    <span class="danger-indicator ${point.danger_index <= 1 ? 'low' : 
-                                                   point.danger_index <= 3 ? 'medium' : ''}">
-                        ${getDangerText(point.danger_index)}
-                    </span>
-                </p>
-            </div>
-        `;
-        
-        const infowindow = new google.maps.InfoWindow({
-            content: contentString,
-            maxWidth: 250
+    try {
+        if (!Array.isArray(dangerPointsData)) {
+            console.warn("Invalid danger points data");
+            return;
+        }
+
+        dangerPointsData.forEach(point => {
+            if (!point || typeof point.lat !== 'number' || typeof point.lng !== 'number') {
+                console.warn("Invalid point data:", point);
+                return;
+            }
+
+            // Create custom info window content
+            const contentString = `
+                <div class="info-window">
+                    <h3>${point.name || 'Danger Point'}</h3>
+                    <p><strong>Area:</strong> ${point.area || 'Unknown'}</p>
+                    <p><strong>Safety:</strong> 
+                        <span class="danger-indicator ${point.danger_index <= 1 ? 'low' : 
+                                                       point.danger_index <= 3 ? 'medium' : ''}">
+                            ${getDangerText(point.danger_index)}
+                        </span>
+                    </p>
+                </div>
+            `;
+            
+            const infowindow = new google.maps.InfoWindow({
+                content: contentString,
+                maxWidth: 250
+            });
+            
+            const marker = new google.maps.Marker({
+                position: { lat: point.lat, lng: point.lng },
+                map: map,
+                title: `${point.name || 'Danger Point'} (Severity: ${point.danger_index})`,
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    fillColor: getDangerColor(point.danger_index),
+                    fillOpacity: 0.85,
+                    strokeColor: '#FFFFFF',
+                    strokeWeight: 2,
+                    scale: point.danger_index + 3 // Size based on danger index
+                },
+                animation: google.maps.Animation.DROP
+            });
+            
+            marker.addListener("click", () => {
+                infowindow.open(map, marker);
+            });
         });
-        
-        const marker = new google.maps.Marker({
-            position: { lat: point.lat, lng: point.lng },
-            map: map,
-            title: `${point.name} (Severity: ${point.danger_index})`,
-            icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                fillColor: getDangerColor(point.danger_index),
-                fillOpacity: 0.85,
-                strokeColor: '#FFFFFF',
-                strokeWeight: 2,
-                scale: point.danger_index + 3 // Size based on danger index
-            },
-            animation: google.maps.Animation.DROP
-        });
-        
-        marker.addListener("click", () => {
-            infowindow.open(map, marker);
-        });
-    });
+    } catch (error) {
+        console.error("Error displaying danger points:", error);
+        showToast("Error displaying danger points on map");
+    }
 }
 
 // Fetch route data from the server with improved error handling
@@ -341,7 +388,7 @@ function fetchRouteData(url) {
     return fetch(url)
         .then(response => {
             if (!response.ok) {
-                throw new Error(`Network error: ${response.status}`);
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
         })
@@ -354,14 +401,27 @@ function fetchRouteData(url) {
                 throw new Error(data.error);
             }
 
-            dangerPointsData = data.danger_points;
+            dangerPointsData = data.danger_points || [];
             displayDangerPoints();
             return data.routes;
         })
         .catch(error => {
-            document.body.removeChild(loadingIndicator);
+            if (loadingIndicator.parentNode) {
+                document.body.removeChild(loadingIndicator);
+            }
+            
             console.error("Error fetching routes:", error);
-            showToast("Could not load routes. Please check your connection.");
+            
+            let message = "Could not load routes. ";
+            if (error.message.includes('Failed to fetch')) {
+                message += "Please check your connection.";
+            } else if (error.message.includes('HTTP error')) {
+                message += "Server error. Please try again later.";
+            } else {
+                message += "Please try again.";
+            }
+            
+            showToast(message);
             throw error;
         });
 }
@@ -390,8 +450,24 @@ function fetchRoutes(startLocation = "Rawalpindi", endLocation = "Islamabad") {
               .then(resolve)
               .catch(reject);
           },
-          () => {
-            showToast("Using default location instead.");
+          (error) => {
+            let message = "Could not get location. ";
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    message += "Location access denied.";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    message += "Location unavailable.";
+                    break;
+                case error.TIMEOUT:
+                    message += "Location request timed out.";
+                    break;
+                default:
+                    message += "Using default location.";
+                    break;
+            }
+            showToast(message);
+            
             const url = `/get_route_data?origin=${encodeURIComponent(startLocation)}&destination=${encodeURIComponent(endLocation)}`;
             fetchRouteData(url)
               .then(resolve)
@@ -406,7 +482,6 @@ function fetchRoutes(startLocation = "Rawalpindi", endLocation = "Islamabad") {
       return fetchRouteData(url);
     }
   }
-  
 
 // Get color based on danger index
 function getDangerColor(severity) {
@@ -426,36 +501,42 @@ function getDangerText(severity) {
 
 // Show a toast message
 function showToast(message) {
-    const toast = document.createElement('div');
-    toast.className = 'toast-message';
-    toast.textContent = message;
-    toast.style.cssText = `
-        position: fixed;
-        bottom: 30px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(0, 0, 0, 0.8);
-        color: white;
-        padding: 10px 20px;
-        border-radius: 20px;
-        font-size: 0.9em;
-        z-index: 1100;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    `;
-    
-    document.body.appendChild(toast);
-    
-    // Fade in
-    setTimeout(() => {
-        toast.style.opacity = "1";
-    }, 10);
-    
-    // Fade out and remove
-    setTimeout(() => {
-        toast.style.opacity = "0";
+    try {
+        const toast = document.createElement('div');
+        toast.className = 'toast-message';
+        toast.textContent = message;
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            z-index: 1100;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        `;
+        
+        document.body.appendChild(toast);
+        
+        // Fade in
         setTimeout(() => {
-            document.body.removeChild(toast);
-        }, 300);
-    }, 3000);
+            toast.style.opacity = "1";
+        }, 10);
+        
+        // Fade out and remove
+        setTimeout(() => {
+            toast.style.opacity = "0";
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    document.body.removeChild(toast);
+                }
+            }, 300);
+        }, 3000);
+    } catch (error) {
+        console.error("Error showing toast:", error);
+    }
 }
